@@ -1,0 +1,6 @@
+# Documentation builds use Python 3.12 and do not install the application.
+Sphinx==9.1.1
+furo==2025.12.19
+myst-parser==5.2.0
+sphinx-autoapi==3.9.0
+sphinxcontrib-mermaid==2.1.1

@@ -42,6 +42,12 @@ def _process_main(kind: str, commands, results, data_root: str) -> None:
 
 
 class ProcessWorker(QObject):
+    """GUI-side queue for one lazily spawned, serial native service process.
+
+    Requests and results carry job identifiers and plain picklable data.
+    Controllers check generations and playback intent when signals arrive.
+    """
+
     result = Signal(int, object)
     failed = Signal(int, str)
 
@@ -62,6 +68,11 @@ class ProcessWorker(QObject):
         self.timer.start()
 
     def submit(self, operation: str, *arguments, priority: bool = False) -> int:
+        """Queue a service call and return its monotonically increasing job ID.
+
+        Priority changes pending order without interrupting active work.
+        Submitting after shutdown raises ``RuntimeError``.
+        """
         if self.closed:
             raise RuntimeError("The worker is closed")
         self.next_id += 1
@@ -71,6 +82,7 @@ class ProcessWorker(QObject):
         return self.next_id
 
     def cancel_pending(self, operation: str | None = None) -> list[int]:
+        """Remove matching queued calls and return their IDs; active work remains."""
         cancelled = [job[0] for job in self.pending if operation is None or job[1] == operation]
         self.pending = deque(job for job in self.pending if job[0] not in cancelled)
         return cancelled
@@ -105,6 +117,7 @@ class ProcessWorker(QObject):
         self._dispatch()
 
     def shutdown(self) -> None:
+        """Release queues and stop polling, terminating a busy process if necessary."""
         if self.closed:
             return
         self.closed = True

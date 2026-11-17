@@ -21,6 +21,8 @@ class RenderedPage:
 
 
 class PdfService:
+    """Serial PyMuPDF service owned by the dedicated PDF process."""
+
     def __init__(self):
         import pymupdf
 
@@ -56,6 +58,11 @@ class PdfService:
         self.pages.clear()
 
     def open(self, filename: str) -> PdfInfo:
+        """Validate and hash an original PDF without copying it.
+
+        Returns metadata or raises ``PdfError`` for unavailable, invalid,
+        empty, or protected files. Opening and hashing belong in the worker.
+        """
         self.close()
         path = Path(filename).expanduser().resolve()
         if not path.is_file():
@@ -93,6 +100,7 @@ class PdfService:
         return self.document.load_page(index)
 
     def extract(self, index: int) -> PageText:
+        """Extract a zero-based page with physical line geometry for later cleanup."""
         page = self._page(index)
         # MuPDF can merge two columns into one block when their baselines align.
         # Inspect line boxes before accepting block order, and exclude image bytes.
@@ -125,6 +133,7 @@ class PdfService:
         return [(page.page_index, page.text) for page in prepared], chunk_prepared_pages(prepared)
 
     def render(self, index: int, scale: float) -> RenderedPage:
+        """Rasterize a page to plain RGB bytes with bounded scale and pixel count."""
         page = self._page(index)
         scale = min(4.0, max(0.2, float(scale)))
         scale = min(scale, (12_000_000 / max(1, page.rect.width * page.rect.height)) ** 0.5)

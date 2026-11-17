@@ -11,6 +11,13 @@ from voiceleaf.workers import ProcessWorker
 
 
 class PlaybackController(QObject):
+    """GUI-side narration coordinator preserving intent during asynchronous work.
+
+    Active voice/rate describe current audio; preferences describe upcoming
+    recipes. Generations reject stale jobs and prefetch is bounded to two
+    upcoming sections.
+    """
+
     changed = Signal()
     status = Signal(str)
     error = Signal(str)
@@ -66,6 +73,7 @@ class PlaybackController(QObject):
         self.changed.emit()
 
     def load(self, chunks: list[TextChunk], progress: ReadingProgress) -> None:
+        """Restore compatible document progress without autoplaying its section."""
         self.stop()
         self.chunks = chunks
         self.navigation_exhausted = bool(chunks) and all(chunk.page_index < progress.view_page for chunk in chunks)
@@ -101,6 +109,7 @@ class PlaybackController(QObject):
         return cues[index]
 
     def snapshot(self, view_page: int) -> ReadingProgress:
+        """Capture page, section, millisecond offset, recipes, and completion."""
         return ReadingProgress(
             view_page, self.index, self.position_ms, self.active_voice, self.active_rate,
             self.preferred_voice, self.preferred_rate,
@@ -114,6 +123,7 @@ class PlaybackController(QObject):
             self.play()
 
     def play(self) -> None:
+        """Set play intent and resume media or prepare the current recipe."""
         if not self.chunks:
             self.status.emit("This page/document has no readable sections yet.")
             return
@@ -145,6 +155,7 @@ class PlaybackController(QObject):
         self.changed.emit()
 
     def pause(self) -> None:
+        """Retain pause intent even when native synthesis is still running."""
         self.intent = "pause"
         self.audio.pause()
         self.state = "PAUSED"
@@ -153,6 +164,7 @@ class PlaybackController(QObject):
         self.checkpoint.emit()
 
     def stop(self) -> None:
+        """Invalidate synthesis jobs, unload media, and reset the section position."""
         self.intent = "stop"
         self._invalidate()
         self.audio.stop(unload=True)
@@ -198,6 +210,7 @@ class PlaybackController(QObject):
             self.stop()
 
     def set_preferences(self, voice: str, rate: float) -> None:
+        """Replace pending recipes while retaining the recipe of loaded audio."""
         if not 0.5 <= rate <= 2.0 or (self.voices and voice not in self.voices):
             return
         if (voice, rate) == (self.preferred_voice, self.preferred_rate):

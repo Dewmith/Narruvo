@@ -12,6 +12,8 @@ log = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class AppPaths:
+    """Local application storage, optionally rooted by ``VOICELEAF_DATA_DIR``."""
+
     root: Path
 
     @classmethod
@@ -55,6 +57,8 @@ def bounded_number(value: object, low: float, high: float, default: float) -> fl
 
 @dataclass
 class Settings:
+    """Validated preferences persisted by atomic JSON file replacement."""
+
     voice: str = "af_heart"
     rate: float = 1.0
     volume: float = 0.8

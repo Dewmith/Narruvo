@@ -9,6 +9,8 @@ from voiceleaf.workers import ProcessWorker
 
 
 class DocumentController(QObject):
+    """Coordinate PDF work asynchronously while rejecting stale document results."""
+
     opened = Signal(object)
     rendered = Signal(object)
     text_ready = Signal(object, object)
@@ -26,6 +28,7 @@ class DocumentController(QObject):
         self.render_key = None
 
     def open(self, filename: str) -> None:
+        """Invalidate the previous generation and queue an original PDF for opening."""
         self.generation += 1
         self.jobs.clear()
         self.worker.cancel_pending()
@@ -45,6 +48,7 @@ class DocumentController(QObject):
         self.jobs[job] = (self.generation, operation, arguments)
 
     def render(self, page_index: int, scale: float) -> None:
+        """Request a page raster, superseding pending renders and checking its recipe."""
         if not self.info:
             return
         for job in self.worker.cancel_pending("render"):

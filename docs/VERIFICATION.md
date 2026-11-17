@@ -1,5 +1,10 @@
 # Local verification — 17 November 2026
 
+> Historical snapshot from initial development and packaging. Test counts,
+> repository visibility, and release status below describe that verification
+> session. Current developer instructions live in the
+> [developer handbook](https://dewmith.github.io/Text2Voice/).
+
 VoiceLeaf was implemented and exercised in the local repository without commits, pushes, or branch creation. Generated artifacts, the virtual environment, and model binaries are ignored by Git.
 
 ## Environment

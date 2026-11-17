@@ -2,7 +2,7 @@
 
 **A little more time for books.**
 
-VoiceLeaf is a local Windows PDF audiobook reader. View a PDF and listen using natural Kokoro voices on your CPU. No account, paid API, backend, Docker, or GPU is required. After dependencies and model files are installed, reading and fresh narration work offline.
+VoiceLeaf is a local Windows PDF audiobook reader. View a PDF and listen using natural Kokoro voices on your CPU. No account, subscription, or GPU is required. After the one-time voice setup, reading and fresh narration work offline.
 
 ![VoiceLeaf's dark green reader showing a sample PDF, a highlighted spoken line, and offline narration controls.](docs/screenshots/reader.png)
 
@@ -19,30 +19,27 @@ VoiceLeaf is a local Windows PDF audiobook reader. View a PDF and listen using n
 
 ## Features
 
-- Dark, resizable PySide6 interface with a library, recent documents, PDF viewer, optional text view, settings, and playback bar.
+- Dark, resizable interface with a library, recent documents, PDF viewer, optional text view, settings, and playback bar.
 - Page navigation, fit-width/fit-page/manual zoom, and PDF drag-and-drop.
 - Installed American and British English voices, 0.5×–2.0× narration speed, volume, play/pause/resume/stop, previous/next section, and seeking within generated audio.
-- Page-aware sentence/paragraph chunks, automatic section/page continuation, and two sections prepared ahead.
+- Automatic continuation through sections and pages, with responsive playback controls.
 - Synchronized line highlighting in the PDF and Text view, with automatic scrolling to the spoken line.
-- SQLite library and saved page, section, audio position, active voice/rate, and preferred voice/rate.
+- A local library with saved reading positions and voice/rate preferences.
 - Explicit model setup with progress, cancellation, checksums, retry, and manual file selection.
 - Reusable audio cache limited to 2 GB, local settings, and diagnostic logs.
 
 ## Requirements
 
 - **Windows 10 version 1809 or later, or Windows 11; x64.** Windows ARM64 and 32-bit Python are outside the MVP's tested target.
-- **Python 3.12 x64 for development/source installs.** The Windows installer includes Python and app dependencies.
-- Internet during downloading/installing development dependencies and the explicit one-time ~354 MB model download.
-- Space for Python dependencies, 354 MB of models, and up to 2 GB of cached audio. 8 GB RAM is a practical starting point; CPU performance determines generation latency.
+- Internet to download the installer and, when explicitly requested, approximately 354 MB of voice models.
+- Space for the application, 354 MB of models, and up to 2 GB of cached audio. 8 GB RAM is a practical starting point; CPU performance determines generation latency.
 - A Windows audio output for listening.
 
-Pinned core versions: PySide6 6.10.3, PyMuPDF 1.26.7, kokoro-onnx 0.6.1, soundfile 0.13.1, NumPy 2.5.5, and CPU onnxruntime 1.32.0. Development tools: pytest 9.2.0 and pytest-qt 4.5.0. Installation uses Windows wheels; a C++ compiler is not normally needed.
+The installer includes Python and the app dependencies; no separate development environment is needed.
 
 ## Install on Windows
 
 Open [Releases](https://github.com/Dewmith/Text2Voice/releases), expand **Assets**, and download `VoiceLeaf-<version>-windows-x64-setup.exe`. Run it to install for your Windows account, then open **VoiceLeaf** from the Start menu. Python, eSpeak, administrator rights, and a separate dependency setup are not required. Desktop shortcuts are optional.
-
-For a private repository, users need repository access to download its release assets.
 
 The installer does not download voice models. On first launch, choose an explicit model download, select existing files, or postpone setup and use PDF viewing. Reading and narration work offline after model setup. Installation upgrades the same app location; uninstalling preserves `%LOCALAPPDATA%\VoiceLeaf` and original PDFs.
 
@@ -52,52 +49,6 @@ Initial installers are unsigned, so Windows may display an unknown-publisher or 
 Get-FileHash .\VoiceLeaf-0.1.0-windows-x64-setup.exe -Algorithm SHA256
 Get-Content .\VoiceLeaf-0.1.0-windows-x64-setup.exe.sha256
 ```
-
-## Quick start in PowerShell
-
-```powershell
-Set-Location 'S:\dewmi\IT Projects\Text2Voice'
-.\scripts\setup.ps1
-.\scripts\run.ps1
-```
-
-Setup checks Python 3.12 x64, creates `.venv`, and installs the project and test dependencies. It checks the Python launcher, PATH, uv-managed installations, and the usual Python 3.12 directory. It does not download models silently or change global Python packages.
-
-If Python 3.12 is not registered with the launcher, provide its executable. On the development machine:
-
-```powershell
-.\scripts\setup.ps1 -Python 'C:\Users\dewmi\AppData\Roaming\uv\python\cpython-3.12.7-windows-x86_64-none\python.exe'
-```
-
-Open a document immediately:
-
-```powershell
-.\scripts\run.ps1 -Pdf 'C:\Books\My Book.pdf'
-```
-
-If script execution is restricted, use a process-local override:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run.ps1
-```
-
-### Manual environment setup
-
-```powershell
-py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e '.[dev]'
-.\.venv\Scripts\python.exe -m voiceleaf
-```
-
-If `py -3.12` cannot locate Python, replace it with `& 'C:\path\to\Python312\python.exe'` in the first command. To use the short entry point, activate the environment:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-python -m voiceleaf
-```
-
-`run.ps1` uses `.venv` directly, so activation is optional with that script.
 
 ## AI model setup
 
@@ -110,21 +61,13 @@ Downloads come from the [kokoro-onnx maintainer's model release](https://github.
 | `kokoro-v1.0.onnx` | 325,505,369 bytes |
 | `voices-v1.0.bin` | 28,214,398 bytes |
 
-The full-precision English model and voice bank total 353.7 MB. Their published SHA-256 digests are pinned and verified before files are installed. Partial downloads are not installed; verified completed files are reused on retry. If release assets change in the future, the manifest needs review rather than silently accepting different bytes.
+The full-precision English model and voice bank total 353.7 MB. Their published SHA-256 digests are pinned and verified before files are installed. Partial downloads are not installed; verified completed files are reused on retry. If verification fails, retry setup or select trusted files manually.
 
 After downloading, choose **Use selected files**. Loading and validation run in a background process. English voices are discovered from the installed bank; Heart (`af_heart`) is preferred when present. See the [official voice list](https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md).
 
 Alternatively, download the two files yourself and select them in the dialog. Manual files may remain in their existing directory and are validated by the ONNX/voice loader. They need not match the bundled download manifest.
 
-An explicit command-line downloader is also available:
-
-```powershell
-.\.venv\Scripts\python.exe scripts\download_models.py
-# Explicitly accept the displayed ~354 MB download:
-.\.venv\Scripts\python.exe scripts\download_models.py --yes
-```
-
-The default destination is `%LOCALAPPDATA%\VoiceLeaf\models`. Model binaries are ignored by Git. Runtime phonemization uses packaged eSpeak resources; no spaCy/NLTK model download is needed.
+The default destination is `%LOCALAPPDATA%\VoiceLeaf\models`. The installer includes the voice-processing resources needed to work offline.
 
 ## Reading and playback
 
@@ -168,72 +111,11 @@ logs/                  Application and worker logs
 
 PDF originals are opened in place, without copying or uploading. Network access occurs only during an explicit model download or when opening an external source link. Settings provides **Clear generated audio** and **Open data folder**.
 
-Use a different local folder for portable operation or isolated tests:
-
-```powershell
-$env:VOICELEAF_DATA_DIR = 'D:\VoiceLeafData'
-.\scripts\run.ps1
-```
-
-Existing models elsewhere can be selected manually. The downloader also accepts `--data-dir 'D:\VoiceLeafData'`.
-
-## Tests and verification
-
-Normal tests generate small PDFs and mock AI synthesis; they never download models:
-
-```powershell
-.\.venv\Scripts\python.exe -m pytest
-.\.venv\Scripts\python.exe -m pip check
-```
-
-Coverage includes extraction/rendering, columns, header cleanup, scanned/blank/encrypted/corrupt PDFs, chunk boundaries and mappings, settings, SQLite progress, cache reuse/pruning, download failures/checksums/cancellation, rapid playback controls, stale results, shutdown, and the UI.
-
-Real integration tests explicitly require installed models:
-
-```powershell
-$env:VOICELEAF_TEST_MODELS = Join-Path $env:LOCALAPPDATA 'VoiceLeaf\models'
-.\.venv\Scripts\python.exe -m pytest -m integration -s
-```
-
-They verify two real CPU voices, valid audio samples, Qt decoding, pause/resume/seek, automatic continuation, and a complete PDF window flow including voice/rate changes and restart/resume. Automated playback is muted. UI screenshots and real sample WAVs are generated under the ignored `.artifacts/` directory.
-
-Normal UI tests use Qt's offscreen platform. To run the full reader test with native Windows widgets:
-
-```powershell
-$env:QT_QPA_PLATFORM = 'windows'
-.\.venv\Scripts\python.exe -m pytest -m integration tests\test_integration.py::test_real_pdf_window_full_reading_flow -s
-Remove-Item Env:QT_QPA_PLATFORM
-```
-
-The real entry point also supports a brief launch check, without first-run setup:
-
-```powershell
-.\.venv\Scripts\python.exe -m voiceleaf --smoke-test
-# Equivalent script check:
-.\scripts\run.ps1 -SmokeTest
-```
-
-### Manual acceptance check
-
-1. Launch, import a text-based PDF, and confirm its pages render and Text view contains readable text.
-2. Select Heart and confirm narration is audible through speakers/headphones.
-3. Pause/resume, change volume, and seek within the generated section.
-4. Select Michael and a different speed; confirm the next section uses them.
-   Confirm the green highlight follows the spoken PDF line, including after a seek; use **Highlight** to turn following off/on.
-5. Let playback cross sections and pages; confirm the viewer follows.
-6. Navigate to another page; confirm narration stops and Play starts its readable text.
-7. Close while paused, reopen, and confirm the saved page/section/position.
-8. Remove the library entry and verify the original PDF remains.
-9. With an isolated empty data directory, confirm setup explains the download and can be postponed.
-10. Disconnect networking after setup and confirm an uncached section still generates.
-
 ## Troubleshooting
 
-**Wrong Python / `No module named voiceleaf`:** use `run.ps1` or `.venv\Scripts\python.exe -m voiceleaf`. Global Python 3.10 does not share this environment. Supply `setup.ps1 -Python` if needed. Rename an existing incompatible `.venv` before recreating it.
+**Model download fails:** check connectivity, proxy/firewall, free disk space, and access to GitHub releases. Retry in setup or transfer the two official files from another machine. Checksum failures preserve previously installed files. Narration does not require internet after installation.
 
-**Dependency or model download fails:** check connectivity, proxy/firewall, free disk space, and access to PyPI/GitHub releases. Retry in setup or transfer the two official files from another machine. Checksum failures preserve previously installed files. Narration does not require internet after installation.
-
-**ONNX Runtime/eSpeak DLL error:** confirm x64 Python and the pinned packages. ONNX Runtime's Windows packages require compatible Visual C++ runtime libraries; install/repair the x64 runtime from [Microsoft's supported downloads](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist). See [ONNX Runtime installation requirements](https://onnxruntime.ai/docs/install/). A stale `PHONEMIZER_ESPEAK_LIBRARY` environment variable may override bundled eSpeak resources.
+**ONNX Runtime/eSpeak DLL error:** confirm you installed the x64 release on a supported Windows version. If the error mentions a Visual C++ runtime, install/repair the x64 runtime from [Microsoft's supported downloads](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist). See [ONNX Runtime installation requirements](https://onnxruntime.ai/docs/install/).
 
 **PDF renders but cannot be narrated:** scanned/image-only PDFs require OCR, planned for a later release. Encrypted PDFs require an unlocked copy. Inspect Text view. Very short documents may have only one section.
 
@@ -243,94 +125,10 @@ The real entry point also supports a brief launch check, without first-run setup
 
 **First playback is slow:** model loading and first CPU inference take time. The interface stays responsive. Only small sections are synthesized; cached sections replay quickly. Skipping cancels queued work, while an already-running native inference may finish before the new section starts.
 
-**Settings/progress cannot be saved:** check data-folder write access or choose a writable `VOICELEAF_DATA_DIR`. Avoid multiple copies using the same data directory while clearing audio or changing models.
+**Settings/progress cannot be saved:** check data-folder write access. Avoid multiple copies using the same data directory while clearing audio or changing models.
 
 **Diagnostics:** open Settings → Open data folder. Application logs are in `logs/voiceleaf.log`; PDF and TTS worker diagnostics are in separate `pdf-worker.log` and `tts-worker.log` files. Errors are displayed in the UI. Worker logs include tracebacks; the main application log rotates.
 
-## Project structure and architecture
+## For developers
 
-```text
-pyproject.toml              Package metadata, dependencies, pytest configuration
-AGENTS.md                   Future development instructions
-scripts/
-  setup.ps1                 Python 3.12 environment and dependency setup
-  run.ps1                   Launch through the local virtual environment
-  download_models.py        Explicit, verified model downloader
-src/voiceleaf/
-  __main__.py, app.py        Module entry point and startup
-  domain.py                 Typed document/page/chunk/progress/audio records
-  config.py                 Application paths and validated settings
-  documents.py, pdf.py       Async coordination and isolated PDF service
-  text.py                   Layout cleanup and page-bound chunking
-  timing.py                 Phoneme-to-word timing alignment for line following
-  models.py                 Model manifest, checksums, and downloads
-  tts.py                    CPU synthesis and atomic WAV cache
-  audio.py, playback.py      Qt adapter and narration state machine
-  persistence.py            SQLite library and reading progress
-  workers.py                Serial process workers and tagged results
-  logging_setup.py          Application logging
-  ui/                       Window, library, viewer, playback, setup, theme
-tests/                      Unit, UI, and opt-in real-model integration tests
-```
-
-PyMuPDF runs exclusively in one process because its [documentation warns against multithreaded use](https://pymupdf.readthedocs.io/en/latest/recipes-multiprocessing.html). Kokoro runs in another process. Generation identifiers reject stale results after rapid controls or document changes. Qt widgets, media playback, and short persistence operations remain on the GUI thread. Shutdown saves progress, unloads audio, cancels queued tasks, and terminates isolated native workers when necessary.
-
-## Windows builds and release automation
-
-CI tests and builds the installer on every pull request, push to `main`, and manual **CI** run. The **Publish Windows release assets** workflow builds the exact tag when you publish a stable release or prerelease, then attaches the installer and SHA-256 file under that release's **Assets**. Creating a draft or pushing a tag alone does not publish installer assets. Files appear when the workflow finishes successfully.
-
-Both workflows reuse the same Windows build job with Python 3.12 x64, the pinned runtime dependencies, PyInstaller 6.22.3, and hooks 2026.10. Official actions are pinned to commit SHAs. CI runs ordinary tests without models, packages a windowed application bundle, compiles an Inno Setup installer, verifies the frozen and installed executables, then uninstalls the isolated test installation and checks that user data survives. Verification does not register a normal installation or create shortcuts.
-
-### Build locally
-
-Install [Inno Setup 6](https://jrsoftware.org/inno-setup/downloads), then use the repository's Python 3.12 virtual environment:
-
-```powershell
-.\.venv\Scripts\python.exe -m pip install -e '.[dev,build]'
-.\.venv\Scripts\python.exe -m pip check
-.\.venv\Scripts\python.exe -m pytest
-.\scripts\build.ps1
-# Optionally validate the intended release tag and specify a compiler:
-.\scripts\build.ps1 -ReleaseTag v0.1.0 -InnoCompiler 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
-```
-
-The verified installer and checksum are in `dist\release`. The unpacked application is in `dist\VoiceLeaf`. Build files and verification logs are ignored by Git. Do not commit binaries, models, PDFs, generated audio, databases, or logs. The build script rejects generated/private file types in the application bundle and isolates PATH during native dependency discovery to avoid collecting unrelated DLLs from other tools.
-
-`VoiceLeaf.exe --smoke-test` checks window startup. `VoiceLeaf.exe --verify-package` checks extraction and rendering in the PDF process plus CPU ONNX Runtime, American/British phonemization, and SoundFile in the TTS process. It exits with 0 on success or 1 on errors/timeouts, uses no network, and requires no models. Worker verification has a 60-second watchdog; the installer verifier also bounds child processes. Logs are under the selected data directory.
-
-For an explicit check using existing real models, set the integration-test variable before verification (no download occurs):
-
-```powershell
-$env:VOICELEAF_DATA_DIR = Join-Path $PWD '.artifacts\real-package-check'
-$env:VOICELEAF_TEST_MODELS = Join-Path $env:LOCALAPPDATA 'VoiceLeaf\models'
-$check = Start-Process -FilePath (Join-Path $PWD 'dist\VoiceLeaf\VoiceLeaf.exe') -ArgumentList '--verify-package' -WindowStyle Hidden -Wait -PassThru
-$check.ExitCode
-Get-Content (Join-Path $env:VOICELEAF_DATA_DIR 'logs\voiceleaf.log') -Tail 10
-Remove-Item Env:VOICELEAF_TEST_MODELS
-Remove-Item Env:VOICELEAF_DATA_DIR
-```
-
-Before the first public release, also install and open the packaged app, select existing model files, import a PDF, and confirm audible offline narration. Automated checks cannot confirm sound through a person's speakers. Windows 10 and 11 should be checked on real target machines; hosted Windows CI runs on Windows Server 2022.
-
-### Publish a release
-
-1. In **Settings → Actions → General**, allow the official GitHub Actions used by the workflows. Organization policy must permit the publishing job's `contents: write` permission. The workflows use the built-in `GITHUB_TOKEN`; no personal access token or repository secret is needed.
-2. Keep **immutable releases disabled** for this publish-then-build flow. GitHub blocks adding or replacing assets after an immutable release is published.
-3. Update both `pyproject.toml` and `src/voiceleaf/__init__.py` to the same version. A tag must be exactly `v<version>`, for example `v0.1.0` or `v0.2.0rc1`; the build rejects mismatches. Commit and push the reviewed changes and workflows yourself.
-4. Create a release for that commit with the matching tag and choose **Publish release**. For the first rollout, use a prerelease and verify the resulting downloads before promoting it.
-5. Follow **Actions → Publish Windows release assets**. After success, download the installer and checksum from **Releases → Assets**.
-
-CI and release builds retain a **windows-installer** artifact for 14 days, and test/package diagnostic logs for 7 days. A failed test, package check, or installation blocks uploading new release assets. The release itself remains published if a build fails; it may temporarily have only GitHub's source archives.
-
-To recover a temporary build failure, rerun the failed jobs from the Actions run. To rebuild an existing release explicitly, run **Publish Windows release assets** from **Actions → Run workflow** and enter its exact published tag. The tagged commit must already include the packaging files. A rerun replaces only the named installer and its checksum; other assets and release notes remain intact. If only publishing failed, rerun that job to reuse the verified build artifact. Replacement uploads delete the previous same-named assets first, so retry promptly after an upload interruption. Once artifacts expire, run the complete workflow again. A source-code fix needs a new version/tag rather than moving an existing release tag.
-
-See [GitHub release workflow events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#release), [immutable releases](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases), and [asset upload behavior](https://cli.github.com/manual/gh_release_upload).
-
-## Roadmap
-
-1. Optional offline OCR for scanned PDFs.
-2. Improved chapter, table, footnote, and complex-layout handling.
-3. Signed Windows installers and broader audio-device testing.
-4. Word-level highlighting and richer bookmarks.
-5. Additional languages after validating their voices and phonemization.
-
+Development setup, architecture, testing, packaging, releases, and Python API reference live in the [developer documentation](https://dewmith.github.io/Text2Voice/).

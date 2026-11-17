@@ -1,4 +1,7 @@
 .venv/
+.venv-docs/
+docs/_autoapi/
+docs/_build/
 __pycache__/
 *.py[cod]
 .pytest_cache/

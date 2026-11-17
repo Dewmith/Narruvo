@@ -21,6 +21,8 @@ AUDIO_VERSION = "voiceleaf-audio-v2-timed"
 
 
 class AudioCache:
+    """Worker-owned WAV/timing cache with validation and protected-path pruning."""
+
     def __init__(self, directory: Path, limit: int = CACHE_LIMIT):
         self.directory = directory
         self.limit = limit
@@ -34,6 +36,7 @@ class AudioCache:
         return path.with_suffix(".timings.json")
 
     def lookup(self, key: str) -> AudioResult | None:
+        """Return a valid audio/timing pair or discard an incompatible cache entry."""
         import soundfile as sf
 
         path = self.path_for(key)
@@ -67,6 +70,7 @@ class AudioCache:
             return None
 
     def prune(self, protected: tuple[str, ...] = (), clear: bool = False) -> None:
+        """Remove oldest audio pairs toward the size limit, preserving references."""
         protected_paths = {Path(p).resolve() for p in protected}
         files = sorted(self.directory.glob("*.wav"), key=lambda p: p.stat().st_mtime)
         def pair_size(path):
@@ -94,6 +98,8 @@ class AudioCache:
 
 
 class KokoroEngine:
+    """CPU speech service whose initialization and cache work stay off the GUI."""
+
     def __init__(self, cache_directory: Path):
         self.cache = AudioCache(cache_directory)
         self.engine = None
@@ -137,6 +143,11 @@ class KokoroEngine:
         return PackageCheckResult("tts", detail)
 
     def initialize(self, model_path: str, voices_path: str) -> list[str]:
+        """Load and fingerprint local models, returning supported English voice IDs.
+
+        Native initialization and hashing both files can block; invoke this
+        in the TTS process with explicitly selected/downloaded model files.
+        """
         import onnxruntime as ort
         from kokoro_onnx import Kokoro
 
@@ -161,6 +172,11 @@ class KokoroEngine:
         return hashlib.sha256(json.dumps(value, ensure_ascii=False).encode("utf-8")).hexdigest()
 
     def create(self, request: SynthesisRequest, protected: tuple[str, ...] = ()) -> AudioResult:
+        """Reuse or generate a recipe's audio/cues and prune unprotected cache.
+
+        Initialization must succeed first. Invalid recipes and unusable
+        generated samples raise ``ValueError``.
+        """
         import numpy as np
         import soundfile as sf
 

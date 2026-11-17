@@ -8,6 +8,12 @@ from voiceleaf.domain import LibraryDocument, PdfInfo, ReadingProgress
 
 
 class Library:
+    """SQLite library using short transactions on its owning GUI thread.
+
+    Content hashes identify documents. Removing a record never removes the
+    original PDF at its referenced path.
+    """
+
     def __init__(self, path: Path):
         path.parent.mkdir(parents=True, exist_ok=True)
         self.connection = sqlite3.connect(path, timeout=5)
@@ -32,6 +38,7 @@ class Library:
             self.connection.execute("PRAGMA user_version=1")
 
     def upsert(self, info: PdfInfo, defaults: ReadingProgress | None = None) -> ReadingProgress:
+        """Store document metadata and return progress for its content identity."""
         now = datetime.now(timezone.utc).isoformat()
         with self.connection:
             # A changed file at an existing path is a new reading session.
@@ -66,6 +73,7 @@ class Library:
             self.connection.execute(f"UPDATE documents SET {assignment} WHERE document_id=?", (*values.values(), document_id))
 
     def remove(self, document_id: str) -> None:
+        """Delete library metadata while leaving the original PDF in place."""
         with self.connection:
             self.connection.execute("DELETE FROM documents WHERE document_id=?", (document_id,))
 

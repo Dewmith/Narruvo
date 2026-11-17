@@ -12,6 +12,8 @@ from uuid import uuid4
 
 @dataclass(frozen=True)
 class ModelAsset:
+    """Download manifest entry with expected filename, byte count, digest, and URL."""
+
     name: str
     size: int
     sha256: str
@@ -31,6 +33,7 @@ class DownloadCancelled(Exception):
 
 
 def file_digest(path: Path) -> str:
+    """Read a file in bounded blocks and return its SHA-256 hexadecimal digest."""
     digest = hashlib.sha256()
     with path.open("rb") as source:
         for block in iter(lambda: source.read(1024 * 1024), b""):
@@ -45,6 +48,12 @@ def download_models(
     assets: tuple[ModelAsset, ...] = MODEL_ASSETS,
     opener: Callable = urllib.request.urlopen,
 ) -> tuple[Path, ...]:
+    """Explicitly download and verify assets from a background setup task.
+
+    Progress receives cumulative completed bytes, total bytes, and filename.
+    Cancellation raises ``DownloadCancelled``. Only verified files replace
+    destinations; incomplete downloads are removed on failure.
+    """
     directory.mkdir(parents=True, exist_ok=True)
     total, completed = sum(a.size for a in assets), 0
     results = []
