@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="208" height="42" viewBox="0 0 208 42" role="img" aria-labelledby="title">
+  <title id="title">Download for Windows</title>
+  <rect x="0.5" y="0.5" width="207" height="41" rx="20.5" fill="#9cceae" stroke="#547a61"/>
+  <g transform="translate(16 12)" fill="none" stroke="#12291a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 1v10m-4-4 4 4 4-4"/>
+    <path d="M1 11v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4"/>
+  </g>
+  <text x="44" y="26" fill="#12291a" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="600">Download for Windows</text>
+</svg>

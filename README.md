@@ -1,8 +1,18 @@
-# Narruvo
+# <img src="docs/_static/leaf.svg" width="48" height="48" alt=""> Narruvo
 
 **Your books, brought to life.**
 
-Narruvo is a local Windows PDF audiobook reader. View a PDF and listen using natural Kokoro voices on your CPU. No account, subscription, or GPU is required. After the one-time voice setup, reading and fresh narration work offline.
+<p>
+  <img src="docs/_static/readme/windows.svg" width="72" height="24" alt="Windows">
+  <img src="docs/_static/readme/free.svg" width="42" height="24" alt="Free">
+  <img src="docs/_static/readme/offline-ai.svg" width="78" height="24" alt="Offline AI">
+  <img src="docs/_static/readme/pdf-reader.svg" width="90" height="24" alt="PDF Reader">
+</p>
+
+Listen to your PDFs with natural Kokoro AI voices, synchronized line highlighting, and saved reading progress. Narration runs privately on your CPU, offline after a one-time voice setup. No account, subscription, or GPU required.
+
+[![Download for Windows](docs/_static/readme/download.svg)](https://github.com/Dewmith/Narruvo/releases)
+[![Documentation](docs/_static/readme/documentation.svg)](https://dewmith.github.io/Narruvo/ "Developer handbook")
 
 ![Narruvo's dark green reader showing a sample PDF, a highlighted spoken line, and offline narration controls.](docs/screenshots/reader.png)
 
