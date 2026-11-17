@@ -1,6 +1,21 @@
 # VoiceLeaf
 
+**A little more time for books.**
+
 VoiceLeaf is a local Windows PDF audiobook reader. View a PDF and listen using natural Kokoro voices on your CPU. No account, paid API, backend, Docker, or GPU is required. After dependencies and model files are installed, reading and fresh narration work offline.
+
+![VoiceLeaf's dark green reader showing a sample PDF, a highlighted spoken line, and offline narration controls.](docs/screenshots/reader.png)
+
+*Read at your own pace. Listen with natural voices. Follow the spoken line as it moves through your PDF.*
+
+## Screenshots
+
+| Your listening library | PDF and Text view |
+| --- | --- |
+| [![VoiceLeaf library with four sample books, saved reading positions, and a finished book.](docs/screenshots/library.png)](docs/screenshots/library.png) | [![VoiceLeaf showing a sample PDF beside its extracted text, with the same spoken line highlighted in both views.](docs/screenshots/text-view.png)](docs/screenshots/text-view.png) |
+| Pick up where you left off with saved reading progress. | Follow synchronized highlighting in the PDF and extracted text. |
+
+*Captured from the application using original sample documents and a separate demo library. Click a gallery image to view it at full size.*
 
 ## Features
 
