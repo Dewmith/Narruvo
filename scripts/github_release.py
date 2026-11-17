@@ -78,10 +78,15 @@ class GitHub:
                 return None
             page += 1
 
-    def create_draft(self, tag: str, *, prerelease: bool) -> None:
+    def create_release(
+        self, tag: str, installer: Path, checksum: Path, *, prerelease: bool,
+    ) -> None:
+        # With assets, gh creates a draft, uploads by the returned release ID,
+        # and publishes it. Avoid looking up a freshly created draft by tag.
         arguments = [
-            "release", "create", tag, "--repo", self.repository, "--verify-tag",
-            "--title", f"Narruvo {tag}", "--draft", "--generate-notes",
+            "release", "create", tag, str(installer), str(checksum),
+            "--repo", self.repository, "--verify-tag",
+            "--title", f"Narruvo {tag}", "--generate-notes",
         ]
         if prerelease:
             arguments.append("--prerelease")
@@ -174,16 +179,15 @@ def publish_release(github: GitHub, tag: str, directory: Path, *, rebuild: bool 
     release = github.get_release(tag)
     if release is None:
         try:
-            github.create_draft(tag, prerelease=is_prerelease(tag))
+            github.create_release(tag, installer, checksum, prerelease=is_prerelease(tag))
         except RuntimeError:
             # A person may have created the release while this build was running.
             release = github.get_release(tag)
             if release is None:
                 raise
         else:
-            release = github.get_release(tag)
-        if release is None:
-            raise RuntimeError("The new draft release could not be retrieved")
+            log.info("Published installer and checksum for %s", tag)
+            return
     if not rebuild and not release["draft"] and assets_complete(release, tag):
         log.info("%s already has both release assets; leaving them in place", tag)
         return

@@ -45,11 +45,13 @@ class MemoryGitHub(releases.GitHub):
         self.calls.append(("get", tag))
         return copy.deepcopy(self.release)
 
-    def create_draft(self, tag: str, *, prerelease: bool) -> None:
+    def create_release(self, tag: str, installer: Path, checksum: Path, *, prerelease: bool) -> None:
         self.calls.append(("create", tag, prerelease))
         self.release = release_record(tag, draft=True, prerelease=prerelease)
         if self.fail_create_after_creation:
             raise RuntimeError("Release was created concurrently")
+        self.upload(tag, installer, checksum)
+        self.publish_draft(tag)
 
     def upload(self, tag: str, installer: Path, checksum: Path) -> None:
         self.calls.append(("upload", tag))
@@ -276,15 +278,31 @@ def test_github_json_response_and_release_commands(monkeypatch):
     monkeypatch.setattr(releases.subprocess, "run", command)
     github = releases.GitHub("example/Narruvo")
     assert github.get_release(TAG) == {"draft": True}
-    github.create_draft("v0.4.0rc1", prerelease=True)
-    assert "--draft" in commands[-1] and "--verify-tag" in commands[-1]
+    installer = Path("Narruvo-test.exe")
+    checksum = Path("Narruvo-test.exe.sha256")
+    github.create_release("v0.4.0rc1", installer, checksum, prerelease=True)
+    assert str(installer) in commands[-1] and str(checksum) in commands[-1]
+    assert "--draft" not in commands[-1] and "--verify-tag" in commands[-1]
     assert "--prerelease" in commands[-1]
-    github.create_draft(TAG, prerelease=False)
+    github.create_release(TAG, installer, checksum, prerelease=False)
     assert "--prerelease" not in commands[-1]
     github.publish_draft(TAG)
     assert commands[-1] == [
         "gh", "release", "edit", TAG, "--repo", "example/Narruvo", "--draft=false",
     ]
+
+
+def test_new_release_does_not_require_immediate_visibility_in_read_api(tmp_path):
+    class DelayedReadGitHub(MemoryGitHub):
+        def get_release(self, tag):
+            self.calls.append(("get", tag))
+            return None
+
+    github = DelayedReadGitHub()
+    releases.publish_release(github, TAG, make_assets(tmp_path))
+    assert github.release is not None and not github.release["draft"]
+    assert releases.assets_complete(github.release, TAG)
+    assert sum(call[0] == "get" for call in github.calls) == 1
 
 
 def test_draft_hidden_by_tag_endpoint_is_found_in_authenticated_listing(monkeypatch):
