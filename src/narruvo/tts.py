@@ -10,13 +10,14 @@ from io import BytesIO
 from pathlib import Path
 from uuid import uuid4
 
-from voiceleaf.domain import AudioResult, PackageCheckResult, SpeechCue, SynthesisRequest
-from voiceleaf.models import file_digest
-from voiceleaf.text import PROCESSING_VERSION
-from voiceleaf.timing import align_cues, estimated_cues
+from narruvo.domain import AudioResult, PackageCheckResult, SpeechCue, SynthesisRequest
+from narruvo.models import file_digest
+from narruvo.text import PROCESSING_VERSION
+from narruvo.timing import align_cues, estimated_cues
 
 log = logging.getLogger(__name__)
 CACHE_LIMIT = 2 * 1024 ** 3
+# Keep existing timed audio reusable after the product rename.
 AUDIO_VERSION = "voiceleaf-audio-v2-timed"
 
 
@@ -121,7 +122,7 @@ class KokoroEngine:
         importlib.metadata.version("kokoro-onnx")
         tokenizer = Tokenizer()
         for language in ("en-us", "en-gb"):
-            if not tokenizer.phonemize("VoiceLeaf reads offline.", lang=language):
+            if not tokenizer.phonemize("Narruvo reads offline.", lang=language):
                 raise RuntimeError(f"Packaged eSpeak resources failed for {language}")
         samples = np.sin(np.arange(2400) * (2 * np.pi * 440 / 24000)).astype(np.float32) * 0.1
         buffer = BytesIO()
@@ -136,7 +137,7 @@ class KokoroEngine:
             root = Path(model_directory)
             voices = self.initialize(str(root / "kokoro-v1.0.onnx"), str(root / "voices-v1.0.bin"))
             voice = "af_heart" if "af_heart" in voices else voices[0]
-            result = self.create(SynthesisRequest("VoiceLeaf reads your books entirely offline.", voice, 1.0))
+            result = self.create(SynthesisRequest("Narruvo reads your books entirely offline.", voice, 1.0))
             if result.duration_ms <= 0:
                 raise RuntimeError("Packaged model synthesis returned no audio")
             detail += f"; real CPU synthesis verified ({result.duration_ms} ms)"

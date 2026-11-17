@@ -7,9 +7,9 @@ from tempfile import TemporaryDirectory
 
 from PySide6.QtCore import QEventLoop, QTimer
 
-from voiceleaf.config import AppPaths
-from voiceleaf.domain import PackageCheckResult
-from voiceleaf.workers import ProcessWorker
+from narruvo.config import AppPaths
+from narruvo.domain import PackageCheckResult
+from narruvo.workers import ProcessWorker
 
 log = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ def verify_package(paths: AppPaths, *, timeout_ms: int = 60_000) -> int:
                     workers.append(worker)
                     worker.result.connect(lambda _job, result, name=component: completed(name, result))
                     worker.failed.connect(lambda _job, message, name=component: fail(f"{name}: {message}"))
-                    arguments = (directory,) if component == "pdf" else (os.getenv("VOICELEAF_TEST_MODELS") or None,)
+                    arguments = (directory,) if component == "pdf" else (os.getenv("NARRUVO_TEST_MODELS") or None,)
                     worker.submit("verify_runtime", *arguments)
                 timer.start(timeout_ms)
                 loop.exec()

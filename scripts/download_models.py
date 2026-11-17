@@ -4,14 +4,14 @@ import argparse
 from pathlib import Path
 from threading import Event
 
-from voiceleaf.config import AppPaths
-from voiceleaf.models import MODEL_ASSETS, download_models
+from narruvo.config import AppPaths
+from narruvo.models import MODEL_ASSETS, download_models
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Download and verify VoiceLeaf's official Kokoro model files (~354 MB).")
+    parser = argparse.ArgumentParser(description="Download and verify Narruvo's official Kokoro model files (~354 MB).")
     parser.add_argument("--yes", action="store_true", help="Explicitly accept the model download")
-    parser.add_argument("--data-dir", type=Path, help="Override VoiceLeaf's application data directory")
+    parser.add_argument("--data-dir", type=Path, help="Override Narruvo's application data directory")
     args = parser.parse_args()
     paths = AppPaths(args.data_dir.resolve()) if args.data_dir else AppPaths.discover()
     print(f"Official Kokoro download: {sum(a.size for a in MODEL_ASSETS) / 1_000_000:.1f} MB to {paths.models}", flush=True)

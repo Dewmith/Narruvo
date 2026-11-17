@@ -28,9 +28,9 @@ UI tests default to Qt's offscreen platform. Generated screenshots and local ver
 Select existing model files explicitly, then request the integration marker:
 
 ```powershell
-$env:VOICELEAF_TEST_MODELS = Join-Path $env:LOCALAPPDATA 'VoiceLeaf\models'
+$env:NARRUVO_TEST_MODELS = Join-Path $env:LOCALAPPDATA 'Narruvo\models'
 .\.venv\Scripts\python.exe -m pytest -m integration -s
-Remove-Item Env:VOICELEAF_TEST_MODELS
+Remove-Item Env:NARRUVO_TEST_MODELS
 ```
 
 The directory must contain `kokoro-v1.0.onnx` and `voices-v1.0.bin`. Missing files skip real-model cases; tests never download them. These cases exercise two CPU voices, finite/non-silent PCM audio, speech cues, Qt decoding, pause/resume/seek, automatic continuation, and a complete PDF window flow.
@@ -38,11 +38,11 @@ The directory must contain `kokoro-v1.0.onnx` and `voices-v1.0.bin`. Missing fil
 For native Windows widgets:
 
 ```powershell
-$env:VOICELEAF_TEST_MODELS = Join-Path $env:LOCALAPPDATA 'VoiceLeaf\models'
+$env:NARRUVO_TEST_MODELS = Join-Path $env:LOCALAPPDATA 'Narruvo\models'
 $env:QT_QPA_PLATFORM = 'windows'
 .\.venv\Scripts\python.exe -m pytest -m integration tests\test_integration.py::test_real_pdf_window_full_reading_flow -s
 Remove-Item Env:QT_QPA_PLATFORM
-Remove-Item Env:VOICELEAF_TEST_MODELS
+Remove-Item Env:NARRUVO_TEST_MODELS
 ```
 
 Automated playback is muted. Audio decoding and state checks do not confirm sound through speakers or headphones.
@@ -50,14 +50,14 @@ Automated playback is muted. Audio decoding and state checks do not confirm soun
 ## Entry-point and package checks
 
 ```powershell
-.\.venv\Scripts\python.exe -m voiceleaf --smoke-test
+.\.venv\Scripts\python.exe -m narruvo --smoke-test
 .\scripts\run.ps1 -SmokeTest
-.\.venv\Scripts\python.exe -m voiceleaf --verify-package
+.\.venv\Scripts\python.exe -m narruvo --verify-package
 ```
 
 `--smoke-test` opens the main window briefly without first-run setup. `--verify-package` uses the actual worker protocol to render a generated PDF, check the CPU provider, phonemize English, and round-trip PCM audio. It returns a nonzero exit code on failure and has a 60-second watchdog.
 
-Use an isolated `VOICELEAF_DATA_DIR` for these commands when testing state. Frozen executables support the same flags; [packaging verification](packaging.md#verify-the-installer) also tests installation and uninstall.
+Use an isolated `NARRUVO_DATA_DIR` for these commands when testing state. Frozen executables support the same flags; [packaging verification](packaging.md#verify-the-installer) also tests installation and uninstall.
 
 ## Manual acceptance
 
@@ -80,7 +80,7 @@ Logs live under the selected data root's `logs/` directory:
 
 | File | Investigate |
 | --- | --- |
-| `voiceleaf.log` | Startup, controller/UI errors, package verification, application exceptions |
+| `narruvo.log` | Startup, controller/UI errors, package verification, application exceptions |
 | `pdf-worker.log` | File access, extraction, rendering, native PDF exceptions |
 | `tts-worker.log` | Model loading, phonemization, inference, cache and timing errors |
 
@@ -96,4 +96,4 @@ The app log rotates; worker logs contain native-service tracebacks. Reproduce wi
 
 ## Verification history
 
-The [dated local verification report](https://github.com/Dewmith/Text2Voice/blob/main/docs/VERIFICATION.md) records historical checks, environments, and limitations. It is retained in the repository and excluded from this website. Use current [CI runs](https://github.com/Dewmith/Text2Voice/actions) and the commands above to evaluate the current revision.
+The [dated local verification report](https://github.com/Dewmith/Narruvo/blob/main/docs/VERIFICATION.md) records historical checks, environments, and limitations. It is retained in the repository and excluded from this website. Use current [CI runs](https://github.com/Dewmith/Narruvo/actions) and the commands above to evaluate the current revision.

@@ -7,8 +7,9 @@ from bisect import bisect_left
 from collections import Counter
 from dataclasses import replace
 
-from voiceleaf.domain import PageLine, PageText, PreparedPage, ReadingLine, TextBlock, TextChunk
+from narruvo.domain import PageLine, PageText, PreparedPage, ReadingLine, TextBlock, TextChunk
 
+# Keep cache identities stable across the product rename.
 PROCESSING_VERSION = "voiceleaf-text-v1"
 
 

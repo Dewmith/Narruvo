@@ -3,7 +3,11 @@
 > Historical snapshot from initial development and packaging. Test counts,
 > repository visibility, and release status below describe that verification
 > session. Current developer instructions live in the
-> [developer handbook](https://dewmith.github.io/Text2Voice/).
+> [developer handbook](https://dewmith.github.io/Narruvo/).
+
+> These checks predate the rename to **Narruvo**. The VoiceLeaf names, paths,
+> and commands below record what was used at the time; current commands use
+> the `narruvo` package and `NARRUVO_` environment variables.
 
 VoiceLeaf was implemented and exercised in the local repository without commits, pushes, or branch creation. Generated artifacts, the virtual environment, and model binaries are ignored by Git.
 

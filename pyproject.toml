@@ -3,7 +3,7 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "voiceleaf"
+name = "narruvo"
 version = "0.1.0"
 description = "An offline PDF audiobook reader for Windows"
 readme = "README.md"
@@ -23,10 +23,10 @@ dev = ["pytest==9.2.0", "pytest-qt==4.5.0"]
 build = ["pyinstaller==6.22.3", "pyinstaller-hooks-contrib==2026.10"]
 
 [project.scripts]
-voiceleaf = "voiceleaf.app:main"
+narruvo = "narruvo.app:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/voiceleaf"]
+packages = ["src/narruvo"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,4 +1,4 @@
-# VoiceLeaf development
+# Narruvo development
 
 - Target Python 3.12, Windows 10/11 x64, and the versions in pyproject.toml.
 - Keep the app offline. Network access belongs only in explicit model setup.

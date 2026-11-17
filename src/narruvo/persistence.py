@@ -4,7 +4,7 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
-from voiceleaf.domain import LibraryDocument, PdfInfo, ReadingProgress
+from narruvo.domain import LibraryDocument, PdfInfo, ReadingProgress
 
 
 class Library:
@@ -22,7 +22,7 @@ class Library:
         version = self.connection.execute("PRAGMA user_version").fetchone()[0]
         if version > 1:
             self.connection.close()
-            raise RuntimeError("This library was created by a newer VoiceLeaf version.")
+            raise RuntimeError("This library was created by a newer Narruvo version.")
         with self.connection:
             self.connection.execute("""
                 CREATE TABLE IF NOT EXISTS documents (

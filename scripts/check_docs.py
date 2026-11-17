@@ -23,7 +23,7 @@ class PageLinks(HTMLParser):
                 self.links.append(values[key])
 
 
-def check_site(root: Path, project_path: str = "/Text2Voice/") -> list[str]:
+def check_site(root: Path, project_path: str = "/Narruvo/") -> list[str]:
     root = root.resolve()
     errors: list[str] = []
     pages: dict[Path, PageLinks] = {}
@@ -33,7 +33,7 @@ def check_site(root: Path, project_path: str = "/Text2Voice/") -> list[str]:
         pages[path] = page
     if not pages:
         return [f"No HTML pages found in {root}"]
-    for required in ("index.html", "search.html", "searchindex.js", "reference/index.html", "_autoapi/voiceleaf/workers/index.html", "_autoapi/voiceleaf/domain/index.html", ".nojekyll"):
+    for required in ("index.html", "search.html", "searchindex.js", "reference/index.html", "_autoapi/narruvo/workers/index.html", "_autoapi/narruvo/domain/index.html", ".nojekyll"):
         if not (root / required).is_file():
             errors.append(f"Missing required output: {required}")
     if (root / "VERIFICATION.html").exists() or (root / "screenshots").exists():
@@ -75,7 +75,7 @@ def check_site(root: Path, project_path: str = "/Text2Voice/") -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path)
-    parser.add_argument("--project-path", default="/Text2Voice/")
+    parser.add_argument("--project-path", default="/Narruvo/")
     args = parser.parse_args()
     errors = check_site(args.output, args.project_path)
     if errors:

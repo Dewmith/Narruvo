@@ -40,10 +40,10 @@ try {
     $metadataJson = & $venvPython @metadataArguments
     if ($LASTEXITCODE -ne 0) { throw 'Package version validation failed.' }
     $metadata = $metadataJson | ConvertFrom-Json
-    & $venvPython -m PyInstaller --noconfirm --clean --workpath build\pyinstaller --distpath dist packaging\voiceleaf.spec
+    & $venvPython -m PyInstaller --noconfirm --clean --workpath build\pyinstaller --distpath dist packaging\narruvo.spec
     if ($LASTEXITCODE -ne 0) { throw 'PyInstaller failed. Install the pinned build tools with pip install -e ".[dev,build]".' }
 
-    $bundle = Join-Path $projectRoot 'dist\VoiceLeaf'
+    $bundle = Join-Path $projectRoot 'dist\Narruvo'
     $unexpected = @(Get-ChildItem -LiteralPath $bundle -File -Recurse | Where-Object {
         $_.Extension -in @('.onnx', '.pdf', '.wav', '.sqlite3', '.log') -or $_.Name -like 'voices*.bin'
     })
@@ -51,10 +51,10 @@ try {
 
     $outputDirectory = Join-Path $projectRoot 'dist\release'
     New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
-    & $InnoCompiler "/DAppVersion=$($metadata.version)" "/DWindowsVersion=$($metadata.windows_version)" "/DBundleDir=$bundle" "/DInstallerOutputDir=$outputDirectory" packaging\voiceleaf.iss
+    & $InnoCompiler "/DAppVersion=$($metadata.version)" "/DWindowsVersion=$($metadata.windows_version)" "/DBundleDir=$bundle" "/DInstallerOutputDir=$outputDirectory" packaging\narruvo.iss
     if ($LASTEXITCODE -ne 0) { throw 'Inno Setup compilation failed.' }
     $installer = Join-Path $outputDirectory $metadata.installer_name
-    & (Join-Path $PSScriptRoot 'verify_installer.ps1') -InstallerPath $installer -BundleExe (Join-Path $bundle 'VoiceLeaf.exe')
+    & (Join-Path $PSScriptRoot 'verify_installer.ps1') -InstallerPath $installer -BundleExe (Join-Path $bundle 'Narruvo.exe')
     $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
     [System.IO.File]::WriteAllText("$installer.sha256", "$hash  $($metadata.installer_name)`n", [System.Text.Encoding]::ASCII)
     Write-Host "Verified installer: $installer"

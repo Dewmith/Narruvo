@@ -4,7 +4,7 @@ from threading import Event
 
 import pytest
 
-from voiceleaf.models import DownloadCancelled, ModelAsset, download_models
+from narruvo.models import DownloadCancelled, ModelAsset, download_models
 
 
 def asset(data, name="model.onnx"):

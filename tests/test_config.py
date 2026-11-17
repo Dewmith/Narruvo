@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from voiceleaf.config import AppPaths, Settings
+from narruvo.config import AppPaths, Settings
 
 
 def test_configuration_defaults(tmp_path):
@@ -15,11 +15,37 @@ def test_configuration_defaults(tmp_path):
 
 
 def test_local_data_override(monkeypatch, tmp_path):
-    monkeypatch.setenv("VOICELEAF_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("NARRUVO_DATA_DIR", str(tmp_path))
     paths = AppPaths.discover()
     paths.ensure()
     assert paths.root == tmp_path.resolve()
     assert paths.models.is_dir() and paths.cache.is_dir() and paths.logs.is_dir()
+
+
+@pytest.mark.parametrize("new_exists, legacy_exists, expected", [
+    (False, False, "Narruvo"),
+    (False, True, "VoiceLeaf"),
+    (True, False, "Narruvo"),
+    (True, True, "Narruvo"),
+])
+def test_default_data_root_preserves_pre_rename_storage(monkeypatch, tmp_path, new_exists, legacy_exists, expected):
+    monkeypatch.delenv("NARRUVO_DATA_DIR", raising=False)
+    monkeypatch.delenv("VOICELEAF_DATA_DIR", raising=False)
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    for exists, name in ((new_exists, "Narruvo"), (legacy_exists, "VoiceLeaf")):
+        if exists:
+            (tmp_path / name).mkdir()
+    assert AppPaths.discover().root == tmp_path / expected
+    assert (tmp_path / "VoiceLeaf").exists() == legacy_exists
+    assert (tmp_path / "Narruvo").exists() == new_exists
+
+
+def test_legacy_data_override_and_new_override_precedence(monkeypatch, tmp_path):
+    monkeypatch.delenv("NARRUVO_DATA_DIR", raising=False)
+    monkeypatch.setenv("VOICELEAF_DATA_DIR", str(tmp_path / "existing-data"))
+    assert AppPaths.discover().root == (tmp_path / "existing-data").resolve()
+    monkeypatch.setenv("NARRUVO_DATA_DIR", str(tmp_path / "chosen-data"))
+    assert AppPaths.discover().root == (tmp_path / "chosen-data").resolve()
 
 
 def test_settings_round_trip(tmp_path):

@@ -1,6 +1,6 @@
 # Development and contribution
 
-Start with [environment setup](getting-started.md) and the [architecture](architecture.md). The repository's [AGENTS.md](https://github.com/Dewmith/Text2Voice/blob/main/AGENTS.md) records constraints that must remain true as the app evolves.
+Start with [environment setup](getting-started.md) and the [architecture](architecture.md). The repository's [AGENTS.md](https://github.com/Dewmith/Narruvo/blob/main/AGENTS.md) records constraints that must remain true as the app evolves.
 
 ## Work on a focused change
 
@@ -49,7 +49,7 @@ Do not commit model binaries, fixture PDFs, generated audio, local databases, lo
 
 The [Python reference](reference/index.md) is generated from source. Use concise class/function docstrings that describe ownership, parameters, units, return values, and meaningful errors. Existing Google-style or NumPy-style docstrings are supported.
 
-Document behavior that callers cannot infer from a signature: whether an operation queues work, preserves intent, invalidates generations, reads a whole file, or requires the caller to be in a worker process. Keep usage explanations in the handbook and routine installation/reading guidance in the [user README](https://github.com/Dewmith/Text2Voice/blob/main/README.md).
+Document behavior that callers cannot infer from a signature: whether an operation queues work, preserves intent, invalidates generations, reads a whole file, or requires the caller to be in a worker process. Keep usage explanations in the handbook and routine installation/reading guidance in the [user README](https://github.com/Dewmith/Narruvo/blob/main/README.md).
 
 ## Pull-request completion checks
 

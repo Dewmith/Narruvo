@@ -8,20 +8,20 @@ Read the [architecture](../architecture.md) before using controller or service i
 
 | Area | Reference |
 | --- | --- |
-| Cross-process records and progress | {py:mod}`voiceleaf.domain` |
-| Data paths and settings | {py:mod}`voiceleaf.config` |
-| PDF service and document coordination | {py:mod}`voiceleaf.pdf`, {py:mod}`voiceleaf.documents` |
-| Serial worker protocol | {py:mod}`voiceleaf.workers` |
-| Text cleanup, chunks, and timing alignment | {py:mod}`voiceleaf.text`, {py:mod}`voiceleaf.timing` |
-| Model manifest and verified downloads | {py:mod}`voiceleaf.models` |
-| CPU synthesis and paired audio cache | {py:mod}`voiceleaf.tts` |
-| Playback intent and Qt media adapter | {py:mod}`voiceleaf.playback`, {py:mod}`voiceleaf.audio` |
-| SQLite library | {py:mod}`voiceleaf.persistence` |
+| Cross-process records and progress | {py:mod}`narruvo.domain` |
+| Data paths and settings | {py:mod}`narruvo.config` |
+| PDF service and document coordination | {py:mod}`narruvo.pdf`, {py:mod}`narruvo.documents` |
+| Serial worker protocol | {py:mod}`narruvo.workers` |
+| Text cleanup, chunks, and timing alignment | {py:mod}`narruvo.text`, {py:mod}`narruvo.timing` |
+| Model manifest and verified downloads | {py:mod}`narruvo.models` |
+| CPU synthesis and paired audio cache | {py:mod}`narruvo.tts` |
+| Playback intent and Qt media adapter | {py:mod}`narruvo.playback`, {py:mod}`narruvo.audio` |
+| SQLite library | {py:mod}`narruvo.persistence` |
 
-The [source package on GitHub](https://github.com/Dewmith/Text2Voice/tree/main/src/voiceleaf) also includes the window, dialogs, theme, startup, and packaging checks. The generated reference concentrates on the core interfaces rather than private UI callbacks.
+The [source package on GitHub](https://github.com/Dewmith/Narruvo/tree/main/src/narruvo) also includes the window, dialogs, theme, startup, and packaging checks. The generated reference concentrates on the core interfaces rather than private UI callbacks.
 
 ```{toctree}
 :maxdepth: 2
 
-../_autoapi/voiceleaf/index
+../_autoapi/narruvo/index
 ```

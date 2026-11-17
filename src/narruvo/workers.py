@@ -20,10 +20,10 @@ def _process_main(kind: str, commands, results, data_root: str) -> None:
     service = None
     try:
         if kind == "pdf":
-            from voiceleaf.pdf import PdfService
+            from narruvo.pdf import PdfService
             service = PdfService()
         else:
-            from voiceleaf.tts import KokoroEngine
+            from narruvo.tts import KokoroEngine
             service = KokoroEngine(root / "audio")
         while True:
             message = commands.get()
@@ -91,7 +91,7 @@ class ProcessWorker(QObject):
         if self.active is not None or not self.pending or self.closed:
             return
         if self.process is None:
-            self.process = self.context.Process(target=_process_main, args=(self.kind, self.commands, self.results, str(self.data_root)), daemon=True, name=f"voiceleaf-{self.kind}")
+            self.process = self.context.Process(target=_process_main, args=(self.kind, self.commands, self.results, str(self.data_root)), daemon=True, name=f"narruvo-{self.kind}")
             self.process.start()
         message = self.pending.popleft()
         self.active = message[0]

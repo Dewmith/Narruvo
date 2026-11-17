@@ -1,10 +1,10 @@
-# VoiceLeaf
+# Narruvo
 
-**A little more time for books.**
+**Your books, brought to life.**
 
-VoiceLeaf is a local Windows PDF audiobook reader. View a PDF and listen using natural Kokoro voices on your CPU. No account, subscription, or GPU is required. After the one-time voice setup, reading and fresh narration work offline.
+Narruvo is a local Windows PDF audiobook reader. View a PDF and listen using natural Kokoro voices on your CPU. No account, subscription, or GPU is required. After the one-time voice setup, reading and fresh narration work offline.
 
-![VoiceLeaf's dark green reader showing a sample PDF, a highlighted spoken line, and offline narration controls.](docs/screenshots/reader.png)
+![Narruvo's dark green reader showing a sample PDF, a highlighted spoken line, and offline narration controls.](docs/screenshots/reader.png)
 
 *Read at your own pace. Listen with natural voices. Follow the spoken line as it moves through your PDF.*
 
@@ -12,7 +12,7 @@ VoiceLeaf is a local Windows PDF audiobook reader. View a PDF and listen using n
 
 | Your listening library | PDF and Text view |
 | --- | --- |
-| [![VoiceLeaf library with four sample books, saved reading positions, and a finished book.](docs/screenshots/library.png)](docs/screenshots/library.png) | [![VoiceLeaf showing a sample PDF beside its extracted text, with the same spoken line highlighted in both views.](docs/screenshots/text-view.png)](docs/screenshots/text-view.png) |
+| [![Narruvo library with four sample books, saved reading positions, and a finished book.](docs/screenshots/library.png)](docs/screenshots/library.png) | [![Narruvo showing a sample PDF beside its extracted text, with the same spoken line highlighted in both views.](docs/screenshots/text-view.png)](docs/screenshots/text-view.png) |
 | Pick up where you left off with saved reading progress. | Follow synchronized highlighting in the PDF and extracted text. |
 
 *Captured from the application using original sample documents and a separate demo library. Click a gallery image to view it at full size.*
@@ -39,15 +39,15 @@ The installer includes Python and the app dependencies; no separate development 
 
 ## Install on Windows
 
-Open [Releases](https://github.com/Dewmith/Text2Voice/releases), expand **Assets**, and download `VoiceLeaf-<version>-windows-x64-setup.exe`. Run it to install for your Windows account, then open **VoiceLeaf** from the Start menu. Python, eSpeak, administrator rights, and a separate dependency setup are not required. Desktop shortcuts are optional.
+Open [Releases](https://github.com/Dewmith/Narruvo/releases), expand **Assets**, and download `Narruvo-<version>-windows-x64-setup.exe`. Run it to install for your Windows account, then open **Narruvo** from the Start menu. Python, eSpeak, administrator rights, and a separate dependency setup are not required. Desktop shortcuts are optional.
 
-The installer does not download voice models. On first launch, choose an explicit model download, select existing files, or postpone setup and use PDF viewing. Reading and narration work offline after model setup. Installation upgrades the same app location; uninstalling preserves `%LOCALAPPDATA%\VoiceLeaf` and original PDFs.
+The installer does not download voice models. On first launch, choose an explicit model download, select existing files, or postpone setup and use PDF viewing. Reading and narration work offline after model setup. Installation upgrades the same app location; uninstalling preserves `%LOCALAPPDATA%\Narruvo` and original PDFs.
 
 Initial installers are unsigned, so Windows may display an unknown-publisher or SmartScreen prompt. Download only from this repository's release assets. To compare an installer against its accompanying `.sha256` file:
 
 ```powershell
-Get-FileHash .\VoiceLeaf-0.1.0-windows-x64-setup.exe -Algorithm SHA256
-Get-Content .\VoiceLeaf-0.1.0-windows-x64-setup.exe.sha256
+Get-FileHash .\Narruvo-0.1.0-windows-x64-setup.exe -Algorithm SHA256
+Get-Content .\Narruvo-0.1.0-windows-x64-setup.exe.sha256
 ```
 
 ## AI model setup
@@ -67,7 +67,7 @@ After downloading, choose **Use selected files**. Loading and validation run in 
 
 Alternatively, download the two files yourself and select them in the dialog. Manual files may remain in their existing directory and are validated by the ONNX/voice loader. They need not match the bundled download manifest.
 
-The default destination is `%LOCALAPPDATA%\VoiceLeaf\models`. The installer includes the voice-processing resources needed to work offline.
+The default destination is `%LOCALAPPDATA%\Narruvo\models`. The installer includes the voice-processing resources needed to work offline.
 
 ## Reading and playback
 
@@ -98,7 +98,7 @@ Double-click a library entry or choose **Open selected**. Its context menu offer
 
 ## Local storage
 
-All application state is local under `%LOCALAPPDATA%\VoiceLeaf`:
+All application state is local under `%LOCALAPPDATA%\Narruvo`:
 
 ```text
 settings.json          Preferences and selected model paths
@@ -108,6 +108,8 @@ models/                Downloaded models
 audio/                 Generated WAVs and timing sidecars, limited to 2 GB
 logs/                  Application and worker logs
 ```
+
+When upgrading from VoiceLeaf, Narruvo reuses `%LOCALAPPDATA%\VoiceLeaf` if the new data folder does not yet exist. Your library, reading progress, settings, and downloaded models stay in place. **Settings → Open data folder** opens the folder actually in use. `NARRUVO_DATA_DIR` selects a custom folder; the former `VOICELEAF_DATA_DIR` override is also accepted, with the new override taking priority.
 
 PDF originals are opened in place, without copying or uploading. Network access occurs only during an explicit model download or when opening an external source link. Settings provides **Clear generated audio** and **Open data folder**.
 
@@ -121,14 +123,14 @@ PDF originals are opened in place, without copying or uploading. Network access 
 
 **Reading order is wrong:** PDF text order is not guaranteed. Ordinary prose and clear columns are handled conservatively; complex magazines, tables, formulas, and footnotes may remain imperfect. Inspect Text view for those documents.
 
-**No sound:** check app volume, the Windows mixer, and the default playback device. Confirm another app can play audio. Restart VoiceLeaf after switching devices if necessary. Seek controls require loaded, seekable audio.
+**No sound:** check app volume, the Windows mixer, and the default playback device. Confirm another app can play audio. Restart Narruvo after switching devices if necessary. Seek controls require loaded, seekable audio.
 
 **First playback is slow:** model loading and first CPU inference take time. The interface stays responsive. Only small sections are synthesized; cached sections replay quickly. Skipping cancels queued work, while an already-running native inference may finish before the new section starts.
 
 **Settings/progress cannot be saved:** check data-folder write access. Avoid multiple copies using the same data directory while clearing audio or changing models.
 
-**Diagnostics:** open Settings → Open data folder. Application logs are in `logs/voiceleaf.log`; PDF and TTS worker diagnostics are in separate `pdf-worker.log` and `tts-worker.log` files. Errors are displayed in the UI. Worker logs include tracebacks; the main application log rotates.
+**Diagnostics:** open Settings → Open data folder. Application logs are in `logs/narruvo.log`; PDF and TTS worker diagnostics are in separate `pdf-worker.log` and `tts-worker.log` files. Errors are displayed in the UI. Worker logs include tracebacks; the main application log rotates.
 
 ## For developers
 
-Development setup, architecture, testing, packaging, releases, and Python API reference live in the [developer documentation](https://dewmith.github.io/Text2Voice/).
+Development setup, architecture, testing, packaging, releases, and Python API reference live in the [developer documentation](https://dewmith.github.io/Narruvo/).

@@ -11,9 +11,9 @@ DOCS = Path(__file__).resolve().parent
 ROOT = DOCS.parent
 METADATA = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
 
-project = "VoiceLeaf"
-author = "VoiceLeaf contributors"
-copyright = "2026, VoiceLeaf contributors"
+project = "Narruvo"
+author = "Narruvo contributors"
+copyright = "2026, Narruvo contributors"
 release = METADATA["version"]
 version = release
 language = "en"
@@ -32,7 +32,7 @@ myst_enable_extensions = ["colon_fence", "deflist", "fieldlist"]
 myst_heading_anchors = 3
 
 autoapi_type = "python"
-autoapi_dirs = [str(ROOT / "src" / "voiceleaf")]
+autoapi_dirs = [str(ROOT / "src" / "narruvo")]
 autoapi_root = "_autoapi"
 autoapi_keep_files = False
 autoapi_add_toctree_entry = False
@@ -52,15 +52,15 @@ nitpick_ignore_regex = [
 ]
 
 html_theme = "furo"
-html_title = "VoiceLeaf developer docs"
-html_baseurl = "https://dewmith.github.io/Text2Voice/"
+html_title = "Narruvo developer docs"
+html_baseurl = "https://dewmith.github.io/Narruvo/"
 html_logo = "_static/leaf.svg"
 html_favicon = "_static/leaf.svg"
 html_static_path = ["_static"]
-html_css_files = ["voiceleaf.css"]
+html_css_files = ["narruvo.css"]
 html_theme_options = {
     "announcement": f"Latest main &nbsp;·&nbsp; package {escape(release)}",
-    "source_repository": "https://github.com/Dewmith/Text2Voice/",
+    "source_repository": "https://github.com/Dewmith/Narruvo/",
     "source_branch": "main",
     "source_directory": "docs/",
     "light_css_variables": {
@@ -103,14 +103,14 @@ def source_edit_links(app, pagename, templatename, context, doctree) -> None:
         source = ROOT / "src" / module / "__init__.py"
     if source.is_file():
         relative = source.relative_to(ROOT).as_posix()
-        context["theme_source_edit_link"] = f"https://github.com/Dewmith/Text2Voice/edit/main/{relative}"
+        context["theme_source_edit_link"] = f"https://github.com/Dewmith/Narruvo/edit/main/{relative}"
     else:
         context["theme_source_repository"] = ""
 
 
 def ensure_static_build(app, exception=None) -> None:
     """Fail if a future documentation change starts importing native app code."""
-    forbidden = {"voiceleaf", "PySide6", "pymupdf", "fitz", "kokoro_onnx", "onnxruntime", "phonemizer", "soundfile"}
+    forbidden = {"narruvo", "PySide6", "pymupdf", "fitz", "kokoro_onnx", "onnxruntime", "phonemizer", "soundfile"}
     imported = sorted(name for name in forbidden if name in sys.modules)
     if imported:
         raise ExtensionError(f"Documentation must parse source without importing application modules: {', '.join(imported)}")

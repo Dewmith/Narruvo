@@ -1,12 +1,12 @@
 # Developer handbook
 
-<div class="vl-intro">
-<p class="vl-eyebrow">VoiceLeaf · latest main</p>
+<div class="narruvo-intro">
+<p class="narruvo-eyebrow">Narruvo · latest main</p>
 <p>Understand the process boundaries, change the reader safely, and ship a verified Windows release.</p>
-<p>VoiceLeaf is a Windows PDF audiobook reader built with Python, PySide6, and CPU Kokoro synthesis. This handbook covers its implementation and development lifecycle.</p>
+<p>Narruvo is a Windows PDF audiobook reader built with Python, PySide6, and CPU Kokoro synthesis. This handbook covers its implementation and development lifecycle.</p>
 </div>
 
-<div class="vl-links">
+<div class="narruvo-links">
 <a href="getting-started.html"><strong>Set up development →</strong><span>Python 3.12, the local environment, and a first run.</span></a>
 <a href="architecture.html"><strong>Understand the architecture →</strong><span>Processes, generations, playback intent, and data flow.</span></a>
 <a href="testing.html"><strong>Verify a change →</strong><span>Ordinary tests, opt-in models, and package checks.</span></a>
@@ -29,10 +29,10 @@
 - **Asynchronous correctness:** requests carry job identifiers and controller generations. Results must respect current playback intent.
 - **User-owned documents:** PDFs stay where they are. Library removal only removes a database entry.
 
-The [repository instructions](https://github.com/Dewmith/Text2Voice/blob/main/AGENTS.md) remain the source for development constraints.
+The [repository instructions](https://github.com/Dewmith/Narruvo/blob/main/AGENTS.md) remain the source for development constraints.
 
 :::{note}
-These pages describe **latest `main`**, with the package version read from project metadata. For downloading, installing, setting up voices, and using the app, see the [user README](https://github.com/Dewmith/Text2Voice/blob/main/README.md).
+These pages describe **latest `main`**, with the package version read from project metadata. For downloading, installing, setting up voices, and using the app, see the [user README](https://github.com/Dewmith/Narruvo/blob/main/README.md).
 :::
 
 ```{toctree}

@@ -4,7 +4,7 @@ import re
 from difflib import SequenceMatcher
 from typing import Protocol, Sequence
 
-from voiceleaf.domain import SpeechCue
+from narruvo.domain import SpeechCue
 
 
 class PhonemeTiming(Protocol):

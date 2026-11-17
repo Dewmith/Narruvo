@@ -1,7 +1,7 @@
 import re
 
-from voiceleaf.domain import PageText, TextBlock
-from voiceleaf.text import chunk_pages, clean_pages, normalize_text, reading_order
+from narruvo.domain import PageText, TextBlock
+from narruvo.text import chunk_pages, clean_pages, normalize_text, reading_order
 
 
 def test_normalizes_broken_lines_and_ligatures():

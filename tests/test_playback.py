@@ -3,8 +3,8 @@ from pathlib import Path
 import pytest
 from PySide6.QtCore import QObject, Signal
 
-from voiceleaf.domain import AudioResult, ReadingProgress, SpeechCue, TextChunk
-from voiceleaf.playback import PlaybackController
+from narruvo.domain import AudioResult, ReadingProgress, SpeechCue, TextChunk
+from narruvo.playback import PlaybackController
 
 
 class FakeWorker(QObject):

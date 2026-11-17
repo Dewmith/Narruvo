@@ -1,0 +1,28 @@
+:root {
+  --font-stack: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-stack--monospace: "Cascadia Code", Consolas, monospace;
+  --narruvo-surface: #edf5ee;
+  --narruvo-border: #cddfd1;
+}
+body[data-theme="dark"] { --narruvo-surface: #1d2925; --narruvo-border: #304139; }
+@media (prefers-color-scheme: dark) {
+  body:not([data-theme="light"]) { --narruvo-surface: #1d2925; --narruvo-border: #304139; }
+}
+.sidebar-logo { max-width: 3rem; margin: 0 0 .5rem; }
+.sidebar-brand-text { font-size: 1.15rem; line-height: 1.4; }
+.narruvo-intro { border: 1px solid var(--narruvo-border); border-left: 4px solid var(--color-brand-primary); background: var(--narruvo-surface); padding: 1.2rem 1.4rem; border-radius: .5rem; margin: 1.5rem 0; }
+.narruvo-intro p:last-child { margin-bottom: 0; }
+.narruvo-eyebrow { margin: 0 0 .5rem; font-size: .8rem; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; color: var(--color-brand-content); }
+.narruvo-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; margin: 1.5rem 0 2rem; }
+.narruvo-links a { display: block; border: 1px solid var(--narruvo-border); border-radius: .5rem; padding: 1rem 1.1rem; text-decoration: none; background: var(--color-background-primary); }
+.narruvo-links a:hover, .narruvo-links a:focus-visible { border-color: var(--color-brand-primary); background: var(--narruvo-surface); }
+.narruvo-links strong { display: block; margin-bottom: .25rem; }
+.narruvo-links span { display: block; font-size: .9rem; color: var(--color-foreground-secondary); }
+article .highlight pre { line-height: 1.65; }
+article table { font-size: .9rem; }
+article .mermaid { margin: 1.5rem 0; }
+.release-flow .mermaid svg { display: block; margin-inline: auto; max-width: 20rem !important; }
+@media (max-width: 42rem) {
+  .narruvo-links { grid-template-columns: 1fr; }
+  .narruvo-intro { padding: 1rem; }
+}

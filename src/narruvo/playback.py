@@ -5,9 +5,9 @@ from bisect import bisect_right
 
 from PySide6.QtCore import QObject, Signal
 
-from voiceleaf.audio import AudioPlayer
-from voiceleaf.domain import AudioResult, ReadingProgress, SynthesisRequest, TextChunk
-from voiceleaf.workers import ProcessWorker
+from narruvo.audio import AudioPlayer
+from narruvo.domain import AudioResult, ReadingProgress, SynthesisRequest, TextChunk
+from narruvo.workers import ProcessWorker
 
 
 class PlaybackController(QObject):

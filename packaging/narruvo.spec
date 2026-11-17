@@ -13,10 +13,10 @@ for package in ("pymupdf", "onnxruntime", "espeakng_loader"):
 for package in ("kokoro_onnx", "phonemizer", "espeakng_loader"):
     datas += collect_data_files(package, excludes=["**/tests/**"])
     hiddenimports += collect_submodules(package, filter=lambda name: ".tests" not in name)
-datas += copy_metadata("voiceleaf", recursive=True)
+datas += copy_metadata("narruvo", recursive=True)
 
 a = Analysis(
-    [str(root / "src" / "voiceleaf" / "__main__.py")],
+    [str(root / "src" / "narruvo" / "__main__.py")],
     pathex=[str(root / "src")],
     binaries=binaries,
     datas=datas,
@@ -30,11 +30,11 @@ pyz = PYZ(a.pure)
 exe = EXE(
     pyz, a.scripts, [],
     exclude_binaries=True,
-    name="VoiceLeaf",
+    name="Narruvo",
     console=False,
     debug=False,
     strip=False,
     upx=False,
     version=str(root / "build" / "windows" / "version-info.txt"),
 )
-bundle = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name="VoiceLeaf")
+bundle = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name="Narruvo")

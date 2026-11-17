@@ -21,9 +21,9 @@ To validate a release tag and select a compiler explicitly:
 
 | Output | Purpose |
 | --- | --- |
-| `dist/VoiceLeaf/VoiceLeaf.exe` | Unpacked windowed executable |
-| `dist/release/VoiceLeaf-<version>-windows-x64-setup.exe` | Verified per-user installer |
-| `dist/release/VoiceLeaf-<version>-windows-x64-setup.exe.sha256` | SHA-256 and installer filename |
+| `dist/Narruvo/Narruvo.exe` | Unpacked windowed executable |
+| `dist/release/Narruvo-<version>-windows-x64-setup.exe` | Verified per-user installer |
+| `dist/release/Narruvo-<version>-windows-x64-setup.exe.sha256` | SHA-256 and installer filename |
 | `build/windows/` | Generated version resource and build metadata |
 | `.artifacts/package-verification/` | Isolated installation checks and logs |
 
@@ -31,11 +31,13 @@ Build and verification files are ignored by Git. The script rejects PDF/model/au
 
 ## Version contract
 
-`pyproject.toml` and `src/voiceleaf/__init__.py` must declare the same version. A release tag must be exactly `v<version>`, such as `v0.1.0` or `v0.2.0rc1`.
+`pyproject.toml` and `src/narruvo/__init__.py` must declare the same version. A release tag must be exactly `v<version>`, such as `v0.1.0` or `v0.2.0rc1`.
 
 The metadata helper validates agreement before bundling and derives numeric Windows version resources from the release components. Prerelease text is retained in the product version and installer filename. Version components must fit Windows resource limits.
 
-The installer has a stable application identity and default location under `%LOCALAPPDATA%\Programs\VoiceLeaf`. It installs per user without administrator rights, adds a Start menu shortcut, and offers an optional desktop shortcut. Uninstall removes installed app files while preserving the separate data directory and original PDFs.
+The installer has a stable application identity and default location under `%LOCALAPPDATA%\Programs\Narruvo`. It installs per user without administrator rights, adds a Start menu shortcut, and offers an optional desktop shortcut. Uninstall removes installed app files while preserving the separate data directory and original PDFs.
+
+Upgrades from VoiceLeaf retain the installer identity and previous installation location. The old executable and default shortcuts are replaced with Narruvo names. Existing application data is reused in place as described in [cache and persistence](architecture.md#cache-and-persistence).
 
 ## Verify the installer
 
@@ -52,13 +54,13 @@ Verification unsets Python environment overrides, removes development-tool direc
 For an explicit real-model check of the bundle:
 
 ```powershell
-$env:VOICELEAF_DATA_DIR = Join-Path $PWD '.artifacts\real-package-check'
-$env:VOICELEAF_TEST_MODELS = Join-Path $env:LOCALAPPDATA 'VoiceLeaf\models'
-$check = Start-Process -FilePath (Join-Path $PWD 'dist\VoiceLeaf\VoiceLeaf.exe') -ArgumentList '--verify-package' -WindowStyle Hidden -Wait -PassThru
+$env:NARRUVO_DATA_DIR = Join-Path $PWD '.artifacts\real-package-check'
+$env:NARRUVO_TEST_MODELS = Join-Path $env:LOCALAPPDATA 'Narruvo\models'
+$check = Start-Process -FilePath (Join-Path $PWD 'dist\Narruvo\Narruvo.exe') -ArgumentList '--verify-package' -WindowStyle Hidden -Wait -PassThru
 $check.ExitCode
-Get-Content (Join-Path $env:VOICELEAF_DATA_DIR 'logs\voiceleaf.log') -Tail 10
-Remove-Item Env:VOICELEAF_TEST_MODELS
-Remove-Item Env:VOICELEAF_DATA_DIR
+Get-Content (Join-Path $env:NARRUVO_DATA_DIR 'logs\narruvo.log') -Tail 10
+Remove-Item Env:NARRUVO_TEST_MODELS
+Remove-Item Env:NARRUVO_DATA_DIR
 ```
 
 No model download occurs. This opts into loading existing models and generating CPU audio; ordinary CI uses model-free verification. Confirm audible output with the [manual acceptance checks](testing.md#manual-acceptance).
@@ -96,7 +98,7 @@ Official Actions are pinned to commit SHAs. Windows builds run on `windows-2022`
 2. Update both version declarations together and run the relevant checks.
 3. Keep immutable releases disabled for this publish-then-build workflow. Published immutable releases cannot accept added or replacement assets.
 4. Create a matching tag for the intended commit, then publish the release or prerelease on GitHub.
-5. Follow [Publish Windows release assets](https://github.com/Dewmith/Text2Voice/actions/workflows/release.yml) and verify the resulting installer and checksum.
+5. Follow [Publish Windows release assets](https://github.com/Dewmith/Narruvo/actions/workflows/release.yml) and verify the resulting installer and checksum.
 
 Draft creation and tag pushes alone do not attach assets. A release stays published if a build fails, so source archives may appear before the executable is ready. Initial installers are unsigned; signing certificates are not part of the current pipeline.
 

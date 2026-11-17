@@ -12,9 +12,9 @@ $installDirectory = Join-Path $verificationRoot 'installed app'
 $dataDirectory = Join-Path $verificationRoot 'user data'
 New-Item -ItemType Directory -Path $dataDirectory -Force | Out-Null
 $sentinel = Join-Path $dataDirectory 'preserve-user-data.txt'
-[System.IO.File]::WriteAllText($sentinel, 'VoiceLeaf uninstall must preserve user data.')
+[System.IO.File]::WriteAllText($sentinel, 'Narruvo uninstall must preserve user data.')
 $savedEnvironment = @{}
-foreach ($name in @('VOICELEAF_DATA_DIR', 'QT_QPA_PLATFORM', 'PYTHONPATH', 'PYTHONHOME', 'VIRTUAL_ENV', 'PATH', 'TEMP', 'TMP')) {
+foreach ($name in @('NARRUVO_DATA_DIR', 'QT_QPA_PLATFORM', 'PYTHONPATH', 'PYTHONHOME', 'VIRTUAL_ENV', 'PATH', 'TEMP', 'TMP')) {
     $savedEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
 }
 
@@ -50,7 +50,7 @@ function Test-Executable {
 $uninstaller = Join-Path $installDirectory 'unins000.exe'
 $uninstalled = $false
 try {
-    $env:VOICELEAF_DATA_DIR = $dataDirectory
+    $env:NARRUVO_DATA_DIR = $dataDirectory
     $env:QT_QPA_PLATFORM = 'offscreen'
     foreach ($name in @('PYTHONPATH', 'PYTHONHOME', 'VIRTUAL_ENV')) {
         [Environment]::SetEnvironmentVariable($name, $null, 'Process')
@@ -62,9 +62,13 @@ try {
     $env:TEMP = $temporaryDirectory
     $env:TMP = $temporaryDirectory
     if ($BundleExe) { Test-Executable $BundleExe }
+    New-Item -ItemType Directory -Path $installDirectory -Force | Out-Null
+    $legacyExecutable = Join-Path $installDirectory 'VoiceLeaf.exe'
+    [System.IO.File]::WriteAllText($legacyExecutable, 'Pre-rename executable placeholder.')
     Invoke-VerifiedProcess $installer @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', '/NOICONS', '/CURRENTUSER', '/VERIFYINSTALL=1', "/DIR=`"$installDirectory`"", "/LOG=`"$(Join-Path $verificationRoot 'install.log')`"")
-    $installedExe = Join-Path $installDirectory 'VoiceLeaf.exe'
-    if (-not (Test-Path -LiteralPath $installedExe)) { throw 'Installer did not create VoiceLeaf.exe.' }
+    $installedExe = Join-Path $installDirectory 'Narruvo.exe'
+    if (-not (Test-Path -LiteralPath $installedExe)) { throw 'Installer did not create Narruvo.exe.' }
+    if (Test-Path -LiteralPath $legacyExecutable) { throw 'Upgrade did not remove the pre-rename executable.' }
     Test-Executable $installedExe
     $preserved = @(Get-ChildItem -LiteralPath $dataDirectory -File -Recurse | Get-FileHash -Algorithm SHA256)
     Invoke-VerifiedProcess $uninstaller @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/LOG=`"$(Join-Path $verificationRoot 'uninstall.log')`"")
@@ -85,7 +89,7 @@ try {
 } finally {
     if (-not $uninstalled -and (Test-Path -LiteralPath $uninstaller)) {
         # /VERIFYINSTALL disables normal registration and shortcuts, so cleanup
-        # cannot unregister a user's separately installed copy of VoiceLeaf.
+        # cannot unregister a user's separately installed copy of Narruvo.
         try { Invoke-VerifiedProcess $uninstaller @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART') }
         catch { Write-Warning "Verification install cleanup failed: $_" }
     }

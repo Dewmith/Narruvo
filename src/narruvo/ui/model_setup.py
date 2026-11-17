@@ -7,8 +7,8 @@ from PySide6.QtCore import QThread, Signal, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QDialog, QFileDialog, QHBoxLayout, QLabel, QLineEdit, QProgressBar, QPushButton, QVBoxLayout
 
-from voiceleaf.config import AppPaths
-from voiceleaf.models import DownloadCancelled, RELEASE_URL, download_models
+from narruvo.config import AppPaths
+from narruvo.models import DownloadCancelled, RELEASE_URL, download_models
 
 
 class DownloadThread(QThread):
@@ -39,7 +39,7 @@ class ModelSetupDialog(QDialog):
         super().__init__(parent)
         self.paths = paths
         self.thread: DownloadThread | None = None
-        self.setWindowTitle("VoiceLeaf · Set up offline voices")
+        self.setWindowTitle("Narruvo · Set up offline voices")
         self.setMinimumWidth(560)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 26, 28, 24)

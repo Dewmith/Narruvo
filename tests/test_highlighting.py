@@ -2,11 +2,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from voiceleaf.domain import PageText, PdfInfo, PdfLine, ReadingLine, SpeechCue, TextBlock, TextChunk
-from voiceleaf.pdf import PdfService, RenderedPage
-from voiceleaf.text import chunk_prepared_pages, prepare_pages
-from voiceleaf.timing import align_cues, estimated_cues
-from voiceleaf.ui.viewer import PdfViewer
+from narruvo.domain import PageText, PdfInfo, PdfLine, ReadingLine, SpeechCue, TextBlock, TextChunk
+from narruvo.pdf import PdfService, RenderedPage
+from narruvo.text import chunk_prepared_pages, prepare_pages
+from narruvo.timing import align_cues, estimated_cues
+from narruvo.ui.viewer import PdfViewer
 
 
 def timed(phonemes, step=0.05):

@@ -1,6 +1,6 @@
 import pytest
 
-from voiceleaf.pdf import PdfError, PdfService
+from narruvo.pdf import PdfError, PdfService
 
 
 def test_extract_render_and_finalize_real_pdf(sample_pdf):

@@ -1,4 +1,4 @@
-"""VoiceLeaf's desktop shell; services own processing and narration behavior."""
+"""Narruvo's desktop shell; services own processing and narration behavior."""
 
 import logging
 from pathlib import Path
@@ -7,21 +7,21 @@ from PySide6.QtCore import QTimer, Qt, QUrl
 from PySide6.QtGui import QDesktopServices, QKeySequence, QShortcut
 from PySide6.QtWidgets import QApplication, QButtonGroup, QFileDialog, QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPlainTextEdit, QProgressBar, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
-from voiceleaf.config import AppPaths, Settings
-from voiceleaf.documents import DocumentController
-from voiceleaf.domain import PdfInfo, ReadingProgress
-from voiceleaf.persistence import Library
-from voiceleaf.playback import PlaybackController
-from voiceleaf.ui.library_view import LibraryView
-from voiceleaf.ui.model_setup import ModelSetupDialog
-from voiceleaf.ui.playback_bar import PlaybackBar
-from voiceleaf.ui.theme import leaf_icon
-from voiceleaf.ui.viewer import PdfViewer
+from narruvo.config import AppPaths, Settings
+from narruvo.documents import DocumentController
+from narruvo.domain import PdfInfo, ReadingProgress
+from narruvo.persistence import Library
+from narruvo.playback import PlaybackController
+from narruvo.ui.library_view import LibraryView
+from narruvo.ui.model_setup import ModelSetupDialog
+from narruvo.ui.playback_bar import PlaybackBar
+from narruvo.ui.theme import leaf_icon
+from narruvo.ui.viewer import PdfViewer
 
 log = logging.getLogger(__name__)
 
 
-class VoiceLeafWindow(QMainWindow):
+class NarruvoWindow(QMainWindow):
     def __init__(self, paths: AppPaths, settings: Settings, initial_pdf: str | None = None, show_setup: bool = True):
         super().__init__()
         self.paths, self.settings = paths, settings
@@ -36,7 +36,7 @@ class VoiceLeafWindow(QMainWindow):
         self.setup_dialog: ModelSetupDialog | None = None
         self.error_dialog: QMessageBox | None = None
         self.closed = False
-        self.setWindowTitle("VoiceLeaf · Offline PDF audiobook reader")
+        self.setWindowTitle("Narruvo · Offline PDF audiobook reader")
         self.setWindowIcon(leaf_icon())
         self.setMinimumSize(800, 600)
         self.resize(1280, 880)
@@ -76,12 +76,12 @@ class VoiceLeafWindow(QMainWindow):
         logo.setFixedSize(34, 34)
         logo.setPixmap(leaf_icon().pixmap(34, 34))
         brand_row.addWidget(logo)
-        self.brand = QLabel("VoiceLeaf")
+        self.brand = QLabel("Narruvo")
         self.brand.setObjectName("brand")
         brand_row.addWidget(self.brand)
         brand_row.addStretch()
         side.addLayout(brand_row)
-        self.tagline = QLabel("A little more time for books.")
+        self.tagline = QLabel("Your books, brought to life.")
         self.tagline.setObjectName("muted")
         side.addWidget(self.tagline)
         side.addSpacing(22)
@@ -150,7 +150,7 @@ class VoiceLeafWindow(QMainWindow):
         self.stack.addWidget(reader)
         self.stack.addWidget(self._settings_panel())
         body_layout.addWidget(self.stack, 1)
-        self.status_label = QLabel("Welcome to VoiceLeaf · import a PDF to begin")
+        self.status_label = QLabel("Welcome to Narruvo · import a PDF to begin")
         self.status_label.setObjectName("muted")
         self.status_label.setWordWrap(True)
         body_layout.addWidget(self.status_label)
@@ -335,7 +335,7 @@ class VoiceLeafWindow(QMainWindow):
         self.current_page = min(max(0, self.restored_progress.view_page), info.page_count - 1)
         self.document_title.setText(info.title)
         self.document_title.setToolTip(info.title)
-        self.setWindowTitle(f"{info.title} · VoiceLeaf")
+        self.setWindowTitle(f"{info.title} · Narruvo")
         self.viewer.set_document(info)
         self.viewer.set_page(self.current_page)
         self.viewer.timer.stop()
@@ -474,7 +474,7 @@ class VoiceLeafWindow(QMainWindow):
         if self.error_dialog and self.error_dialog.isVisible():
             self.error_dialog.setInformativeText(message)
             return
-        self.error_dialog = QMessageBox(QMessageBox.Icon.Warning, "VoiceLeaf", message, QMessageBox.StandardButton.Ok, self)
+        self.error_dialog = QMessageBox(QMessageBox.Icon.Warning, "Narruvo", message, QMessageBox.StandardButton.Ok, self)
         self.error_dialog.setTextFormat(Qt.TextFormat.PlainText)
         self.error_dialog.open()
 

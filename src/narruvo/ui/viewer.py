@@ -4,8 +4,8 @@ from PySide6.QtCore import Qt, QTimer, QRectF, Signal
 from PySide6.QtGui import QColor, QImage, QPainter, QPen, QPixmap, QTextCursor
 from PySide6.QtWidgets import QAbstractSpinBox, QComboBox, QHBoxLayout, QLabel, QPlainTextEdit, QPushButton, QScrollArea, QSpinBox, QSplitter, QStyle, QTextEdit, QVBoxLayout, QWidget
 
-from voiceleaf.domain import PdfInfo, SpeechCue, TextChunk
-from voiceleaf.pdf import RenderedPage
+from narruvo.domain import PdfInfo, SpeechCue, TextChunk
+from narruvo.pdf import RenderedPage
 
 
 class PdfPageLabel(QLabel):

@@ -14,27 +14,28 @@
 
 [Setup]
 AppId={{8748FC96-84F0-4F51-93B2-3F667F937686}
-AppName=VoiceLeaf
+AppName=Narruvo
 AppVersion={#AppVersion}
-AppPublisher=VoiceLeaf
-AppPublisherURL=https://github.com/Dewmith/Text2Voice
-AppSupportURL=https://github.com/Dewmith/Text2Voice/issues
-DefaultDirName={localappdata}\Programs\VoiceLeaf
-DefaultGroupName=VoiceLeaf
+AppPublisher=Narruvo
+AppPublisherURL=https://github.com/Dewmith/Narruvo
+AppSupportURL=https://github.com/Dewmith/Narruvo/issues
+DefaultDirName={localappdata}\Programs\Narruvo
+DefaultGroupName=Narruvo
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64os
 ArchitecturesInstallIn64BitMode=x64os
 MinVersion=10.0.17763
 OutputDir={#InstallerOutputDir}
-OutputBaseFilename=VoiceLeaf-{#AppVersion}-windows-x64-setup
+OutputBaseFilename=Narruvo-{#AppVersion}-windows-x64-setup
 VersionInfoVersion={#WindowsVersion}
 VersionInfoProductVersion={#WindowsVersion}
 VersionInfoTextVersion={#AppVersion}
 VersionInfoProductTextVersion={#AppVersion}
-UninstallDisplayIcon={app}\VoiceLeaf.exe
+UninstallDisplayIcon={app}\Narruvo.exe
 CreateUninstallRegKey=not IsVerificationInstall
 UsePreviousAppDir=not IsVerificationInstall
 UsePreviousTasks=not IsVerificationInstall
+UsePreviousGroup=no
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -48,12 +49,19 @@ Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription
 [Files]
 Source: "{#BundleDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
+[InstallDelete]
+; Keep the stable AppId while replacing the old executable and default shortcuts.
+Type: files; Name: "{app}\VoiceLeaf.exe"
+Type: files; Name: "{userprograms}\VoiceLeaf\VoiceLeaf.lnk"; Check: not IsVerificationInstall
+Type: dirifempty; Name: "{userprograms}\VoiceLeaf"; Check: not IsVerificationInstall
+Type: files; Name: "{userdesktop}\VoiceLeaf.lnk"; Check: not IsVerificationInstall
+
 [Icons]
-Name: "{group}\VoiceLeaf"; Filename: "{app}\VoiceLeaf.exe"; Check: not IsVerificationInstall
-Name: "{autodesktop}\VoiceLeaf"; Filename: "{app}\VoiceLeaf.exe"; Tasks: desktopicon; Check: not IsVerificationInstall
+Name: "{group}\Narruvo"; Filename: "{app}\Narruvo.exe"; Check: not IsVerificationInstall
+Name: "{autodesktop}\Narruvo"; Filename: "{app}\Narruvo.exe"; Tasks: desktopicon; Check: not IsVerificationInstall
 
 [Run]
-Filename: "{app}\VoiceLeaf.exe"; Description: "Launch VoiceLeaf"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Narruvo.exe"; Description: "Launch Narruvo"; Flags: nowait postinstall skipifsilent
 
 [Code]
 function IsVerificationInstall: Boolean;

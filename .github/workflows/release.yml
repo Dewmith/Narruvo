@@ -67,7 +67,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ needs.release.outputs.tag }}
         run: |
-          $name = "VoiceLeaf-$($env:RELEASE_TAG.Substring(1))-windows-x64-setup.exe"
+          $name = "Narruvo-$($env:RELEASE_TAG.Substring(1))-windows-x64-setup.exe"
           $installer = Join-Path (Resolve-Path release-assets).Path $name
           $checksum = "$installer.sha256"
           $files = @(Get-ChildItem -LiteralPath release-assets -File -Recurse)

@@ -12,15 +12,22 @@ log = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class AppPaths:
-    """Local application storage, optionally rooted by ``VOICELEAF_DATA_DIR``."""
+    """Local storage with explicit overrides and reuse of pre-rename data."""
 
     root: Path
 
     @classmethod
     def discover(cls) -> "AppPaths":
-        override = os.getenv("VOICELEAF_DATA_DIR")
+        override = os.getenv("NARRUVO_DATA_DIR") or os.getenv("VOICELEAF_DATA_DIR")
+        if override:
+            return cls(Path(override).expanduser().resolve())
         base = Path(os.getenv("LOCALAPPDATA", str(Path.home() / "AppData" / "Local")))
-        return cls(Path(override).expanduser().resolve() if override else base / "VoiceLeaf")
+        root = base / "Narruvo"
+        legacy = base / "VoiceLeaf"
+        # Keep existing libraries, model files, and absolute audio paths in place.
+        if not root.exists() and legacy.is_dir():
+            root = legacy
+        return cls(root)
 
     @property
     def models(self) -> Path:

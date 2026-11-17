@@ -1,5 +1,5 @@
-from voiceleaf.domain import PdfInfo, ReadingProgress
-from voiceleaf.persistence import Library
+from narruvo.domain import PdfInfo, ReadingProgress
+from narruvo.persistence import Library
 
 
 def info(path="C:/book.pdf", identity="abc"):

@@ -70,7 +70,7 @@ def download_models(
         downloaded = 0
         digest = hashlib.sha256()
         try:
-            request = urllib.request.Request(asset.url, headers={"User-Agent": "VoiceLeaf/0.1"})
+            request = urllib.request.Request(asset.url, headers={"User-Agent": "Narruvo/0.1"})
             with opener(request, timeout=15) as response, temporary.open("wb") as target:
                 while True:
                     if cancel.is_set():

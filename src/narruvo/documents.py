@@ -4,8 +4,8 @@ from pathlib import Path
 
 from PySide6.QtCore import QObject, Signal
 
-from voiceleaf.domain import PdfInfo
-from voiceleaf.workers import ProcessWorker
+from narruvo.domain import PdfInfo
+from narruvo.workers import ProcessWorker
 
 
 class DocumentController(QObject):

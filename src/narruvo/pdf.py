@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
 
-from voiceleaf.domain import PackageCheckResult, PageText, PdfInfo, PdfLine, TextBlock
+from narruvo.domain import PackageCheckResult, PageText, PdfInfo, PdfLine, TextBlock
 
 
 class PdfError(ValueError):
@@ -36,7 +36,7 @@ class PdfService:
         try:
             with self.module.open() as document:
                 page = document.new_page()
-                page.insert_text((50, 100), "VoiceLeaf package verification.")
+                page.insert_text((50, 100), "Narruvo package verification.")
                 document.save(path)
             info = self.open(str(path))
             page = self.extract(0)
@@ -74,7 +74,7 @@ class PdfService:
                 raise PdfError("Choose a PDF document (.pdf).")
             if document.needs_pass:
                 document.close()
-                raise PdfError("This PDF is password protected. Open an unlocked copy in VoiceLeaf.")
+                raise PdfError("This PDF is password protected. Open an unlocked copy in Narruvo.")
             if not document.page_count:
                 document.close()
                 raise PdfError("This PDF has no pages.")
@@ -128,7 +128,7 @@ class PdfService:
         return result
 
     def finalize(self):
-        from voiceleaf.text import chunk_prepared_pages, prepare_pages
+        from narruvo.text import chunk_prepared_pages, prepare_pages
         prepared = prepare_pages([self.pages[i] for i in sorted(self.pages)])
         return [(page.page_index, page.text) for page in prepared], chunk_prepared_pages(prepared)
 

@@ -10,22 +10,22 @@ import soundfile as sf
 from PySide6.QtMultimedia import QAudioBufferOutput, QMediaDevices, QMediaPlayer
 from PySide6.QtCore import Qt
 
-from voiceleaf.config import AppPaths
-from voiceleaf.config import Settings
-from voiceleaf.domain import ReadingProgress, SynthesisRequest, TextChunk
-from voiceleaf.playback import PlaybackController
-from voiceleaf.tts import KokoroEngine
-from voiceleaf.ui.main_window import VoiceLeafWindow
-from voiceleaf.ui.theme import apply_theme
+from narruvo.config import AppPaths
+from narruvo.config import Settings
+from narruvo.domain import ReadingProgress, SynthesisRequest, TextChunk
+from narruvo.playback import PlaybackController
+from narruvo.tts import KokoroEngine
+from narruvo.ui.main_window import NarruvoWindow
+from narruvo.ui.theme import apply_theme
 
 pytestmark = pytest.mark.integration
 
 
 def model_files():
-    root = Path(os.environ.get("VOICELEAF_TEST_MODELS", str(AppPaths.discover().models)))
+    root = Path(os.environ.get("NARRUVO_TEST_MODELS", str(AppPaths.discover().models)))
     model, voices = root / "kokoro-v1.0.onnx", root / "voices-v1.0.bin"
     if not model.is_file() or not voices.is_file():
-        pytest.skip("Download models explicitly, or set VOICELEAF_TEST_MODELS to their directory")
+        pytest.skip("Download models explicitly, or set NARRUVO_TEST_MODELS to their directory")
     return model, voices
 
 
@@ -42,7 +42,7 @@ def real_engine():
 
 @pytest.mark.parametrize("voice,rate", [("af_heart", 1.0), ("am_michael", 1.25)])
 def test_real_offline_cpu_synthesis(real_engine, voice, rate):
-    request = SynthesisRequest("Welcome to VoiceLeaf. Your books stay on your computer, and your natural reading voice works entirely offline.", voice, rate)
+    request = SynthesisRequest("Welcome to Narruvo. Your books stay on your computer, and your natural reading voice works entirely offline.", voice, rate)
     result = real_engine.create(request)
     samples, sample_rate = sf.read(result.path)
     assert sample_rate == 24000 and result.duration_ms > 1000
@@ -98,7 +98,7 @@ def test_real_pdf_window_full_reading_flow(qtbot, qapp, tmp_path, sample_pdf):
     paths.ensure()
     settings = Settings(model_path=str(model), voices_path=str(voices), volume=0.0)
     apply_theme(qapp)
-    window = VoiceLeafWindow(paths, settings, str(sample_pdf), show_setup=False)
+    window = NarruvoWindow(paths, settings, str(sample_pdf), show_setup=False)
     qtbot.addWidget(window)
     window.show()
     failures = []
@@ -151,7 +151,7 @@ def test_real_pdf_window_full_reading_flow(qtbot, qapp, tmp_path, sample_pdf):
         assert window.grab().save(str(artifacts / "real-reader.png"))
         assert window.grab().save(str(artifacts / "line-highlighting.png"))
         window.close()
-        restored = VoiceLeafWindow(paths, Settings.load(paths.settings_file), show_setup=False)
+        restored = NarruvoWindow(paths, Settings.load(paths.settings_file), show_setup=False)
         qtbot.addWidget(restored)
         restored.show()
         try:

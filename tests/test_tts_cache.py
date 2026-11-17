@@ -2,8 +2,8 @@ import numpy as np
 import json
 from pathlib import Path
 
-from voiceleaf.domain import SynthesisRequest
-from voiceleaf.tts import AudioCache, KokoroEngine
+from narruvo.domain import SynthesisRequest
+from narruvo.tts import AudioCache, KokoroEngine
 
 
 class FakeKokoro:

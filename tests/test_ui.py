@@ -2,17 +2,17 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt
 
-from voiceleaf.config import AppPaths, Settings
-from voiceleaf.ui.main_window import VoiceLeafWindow
-from voiceleaf.ui.model_setup import ModelSetupDialog
-from voiceleaf.ui.theme import apply_theme
+from narruvo.config import AppPaths, Settings
+from narruvo.ui.main_window import NarruvoWindow
+from narruvo.ui.model_setup import ModelSetupDialog
+from narruvo.ui.theme import apply_theme
 
 
 def make_window(qtbot, qapp, tmp_path):
     paths = AppPaths(tmp_path / "data")
     paths.ensure()
     apply_theme(qapp)
-    window = VoiceLeafWindow(paths, Settings(), show_setup=False)
+    window = NarruvoWindow(paths, Settings(), show_setup=False)
     qtbot.addWidget(window)
     window.show()
     return window
@@ -76,7 +76,7 @@ def test_responsive_reader_and_visual_artifacts(qtbot, qapp, tmp_path, sample_pd
 def test_missing_models_open_helpful_setup_without_download(qtbot, qapp, tmp_path):
     paths = AppPaths(tmp_path / "first-run")
     paths.ensure()
-    window = VoiceLeafWindow(paths, Settings(), show_setup=True)
+    window = NarruvoWindow(paths, Settings(), show_setup=True)
     qtbot.addWidget(window)
     window.show()
     try:
@@ -108,7 +108,7 @@ def test_manual_model_selection(qtbot, tmp_path):
 def test_download_failure_reenables_setup_controls(qtbot, tmp_path, monkeypatch):
     def failed_download(*_args):
         raise OSError("test network failure")
-    monkeypatch.setattr("voiceleaf.ui.model_setup.download_models", failed_download)
+    monkeypatch.setattr("narruvo.ui.model_setup.download_models", failed_download)
     dialog = ModelSetupDialog(AppPaths(tmp_path), tmp_path / "model.onnx", tmp_path / "voices.bin")
     qtbot.addWidget(dialog)
     qtbot.mouseClick(dialog.download, Qt.MouseButton.LeftButton)
@@ -118,11 +118,11 @@ def test_download_failure_reenables_setup_controls(qtbot, tmp_path, monkeypatch)
 
 
 def test_download_cancellation_waits_for_worker_before_closing(qtbot, tmp_path, monkeypatch):
-    from voiceleaf.models import DownloadCancelled
+    from narruvo.models import DownloadCancelled
     def cancellable_download(_directory, _progress, cancel):
         cancel.wait(3)
         raise DownloadCancelled()
-    monkeypatch.setattr("voiceleaf.ui.model_setup.download_models", cancellable_download)
+    monkeypatch.setattr("narruvo.ui.model_setup.download_models", cancellable_download)
     dialog = ModelSetupDialog(AppPaths(tmp_path), tmp_path / "model.onnx", tmp_path / "voices.bin")
     qtbot.addWidget(dialog)
     dialog.show()

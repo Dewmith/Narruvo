@@ -13,14 +13,14 @@ def read_metadata(root: Path, release_tag: str = "") -> dict[str, str]:
     version = project["version"]
     if not isinstance(version, str) or not re.fullmatch(r"\d+\.\d+\.\d+(?:(?:a|b|rc)\d+|\.post\d+|\.dev\d+)?", version):
         raise ValueError("Use a version such as 1.2.3 or 1.2.3rc1 in pyproject.toml")
-    module = ast.parse((root / "src" / "voiceleaf" / "__init__.py").read_text(encoding="utf-8"))
+    module = ast.parse((root / "src" / "narruvo" / "__init__.py").read_text(encoding="utf-8"))
     app_version = next(
         (ast.literal_eval(node.value) for node in module.body if isinstance(node, ast.Assign)
          and any(isinstance(target, ast.Name) and target.id == "__version__" for target in node.targets)),
         None,
     )
     if app_version != version:
-        raise ValueError(f"Version mismatch: pyproject.toml is {version}, voiceleaf.__version__ is {app_version}")
+        raise ValueError(f"Version mismatch: pyproject.toml is {version}, narruvo.__version__ is {app_version}")
     if release_tag and release_tag != f"v{version}":
         raise ValueError(f"Release tag {release_tag!r} must match project version v{version}")
     numbers = tuple(int(part) for part in re.match(r"\d+\.\d+\.\d+", version).group().split("."))
@@ -29,7 +29,7 @@ def read_metadata(root: Path, release_tag: str = "") -> dict[str, str]:
     return {
         "version": version,
         "windows_version": ".".join(str(part) for part in (*numbers, 0)),
-        "installer_name": f"VoiceLeaf-{version}-windows-x64-setup.exe",
+        "installer_name": f"Narruvo-{version}-windows-x64-setup.exe",
     }
 
 
@@ -44,12 +44,12 @@ def write_metadata(root: Path, output: Path, release_tag: str = "") -> dict[str,
         f"  ffi=FixedFileInfo(filevers={numbers!r}, prodvers={numbers!r},\n"
         "    mask=0x3f, flags=0x0, OS=0x40004, fileType=0x1, subtype=0x0, date=(0, 0)),\n"
         "  kids=[StringFileInfo([StringTable('040904B0', [\n"
-        "    StringStruct('CompanyName', 'VoiceLeaf'),\n"
-        "    StringStruct('FileDescription', 'VoiceLeaf offline PDF audiobook reader'),\n"
+        "    StringStruct('CompanyName', 'Narruvo'),\n"
+        "    StringStruct('FileDescription', 'Narruvo offline PDF audiobook reader'),\n"
         f"    StringStruct('FileVersion', {version!r}),\n"
-        "    StringStruct('InternalName', 'VoiceLeaf'),\n"
-        "    StringStruct('OriginalFilename', 'VoiceLeaf.exe'),\n"
-        "    StringStruct('ProductName', 'VoiceLeaf'),\n"
+        "    StringStruct('InternalName', 'Narruvo'),\n"
+        "    StringStruct('OriginalFilename', 'Narruvo.exe'),\n"
+        "    StringStruct('ProductName', 'Narruvo'),\n"
         f"    StringStruct('ProductVersion', {version!r})\n"
         "  ])]), VarFileInfo([VarStruct('Translation', [1033, 1200])])]\n"
         ")\n",

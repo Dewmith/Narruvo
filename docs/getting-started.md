@@ -2,7 +2,7 @@
 
 ## Supported environment
 
-Application development targets **Python 3.12 x64** on **Windows 10 version 1809 or later, or Windows 11**. Use the exact runtime and test versions in [pyproject.toml](https://github.com/Dewmith/Text2Voice/blob/main/pyproject.toml).
+Application development targets **Python 3.12 x64** on **Windows 10 version 1809 or later, or Windows 11**. Use the exact runtime and test versions in [pyproject.toml](https://github.com/Dewmith/Narruvo/blob/main/pyproject.toml).
 
 | Component | Pinned version |
 | --- | --- |
@@ -22,8 +22,8 @@ Documentation has its own Python environment and can be built on Windows or Linu
 From PowerShell:
 
 ```powershell
-git clone https://github.com/Dewmith/Text2Voice.git
-Set-Location Text2Voice
+git clone https://github.com/Dewmith/Narruvo.git
+Set-Location Narruvo
 .\scripts\setup.ps1
 .\scripts\run.ps1
 ```
@@ -49,7 +49,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run.ps1
 py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e '.[dev]'
 .\.venv\Scripts\python.exe -m pip check
-.\.venv\Scripts\python.exe -m voiceleaf
+.\.venv\Scripts\python.exe -m narruvo
 ```
 
 The module entry point calls `multiprocessing.freeze_support()` before importing the GUI. Keep that ordering when changing startup or packaging.
@@ -69,16 +69,16 @@ Ordinary tests generate small fixture PDFs and do not require models. The smoke 
 Use a separate data directory when reproducing cache, library, or model-setup behavior:
 
 ```powershell
-$env:VOICELEAF_DATA_DIR = Join-Path $PWD '.artifacts\dev-data'
+$env:NARRUVO_DATA_DIR = Join-Path $PWD '.artifacts\dev-data'
 .\scripts\run.ps1
-Remove-Item Env:VOICELEAF_DATA_DIR
+Remove-Item Env:NARRUVO_DATA_DIR
 ```
 
-{py:class}`voiceleaf.config.AppPaths` discovers this override. All settings, library records, downloaded models, generated audio, and logs then belong to that directory. Imported PDF originals remain at their existing paths.
+{py:class}`narruvo.config.AppPaths` discovers this override. All settings, library records, downloaded models, generated audio, and logs then belong to that directory. Imported PDF originals remain at their existing paths.
 
 ## Models for development
 
-Choose the app's explicit setup dialog to download or select the two model files. For repeatable integration checks, reuse existing files through `VOICELEAF_TEST_MODELS`; the tests do not download anything.
+Choose the app's explicit setup dialog to download or select the two model files. For repeatable integration checks, reuse existing files through `NARRUVO_TEST_MODELS`; the tests do not download anything.
 
 An explicit CLI downloader is also available:
 
@@ -88,7 +88,7 @@ An explicit CLI downloader is also available:
 .\.venv\Scripts\python.exe scripts\download_models.py --yes
 ```
 
-The default destination is `%LOCALAPPDATA%\VoiceLeaf\models`. The downloader verifies the manifest's byte counts and SHA-256 digests before installing files. A `--data-dir` argument selects another application data root. eSpeak resources come from the installed package; no spaCy or NLTK model download is needed.
+The default destination is `%LOCALAPPDATA%\Narruvo\models`. The downloader verifies the manifest's byte counts and SHA-256 digests before installing files. A `--data-dir` argument selects another application data root. eSpeak resources come from the installed package; no spaCy or NLTK model download is needed.
 
 Model files, PDFs, generated audio, databases, and logs stay outside commits. The [testing guide](testing.md) describes opt-in synthesis and native multimedia checks.
 
@@ -96,8 +96,8 @@ Model files, PDFs, generated audio, databases, and logs stay outside commits. Th
 
 | Location | Responsibility |
 | --- | --- |
-| `src/voiceleaf/` | Domain records, processing, persistence, and controllers |
-| `src/voiceleaf/ui/` | Qt window, views, dialogs, controls, and theme |
+| `src/narruvo/` | Domain records, processing, persistence, and controllers |
+| `src/narruvo/ui/` | Qt window, views, dialogs, controls, and theme |
 | `tests/` | Ordinary tests and opt-in real-model integration tests |
 | `scripts/` | Environment setup, launch, model download, and installer verification |
 | `packaging/` | PyInstaller bundle and Inno Setup installer definitions |

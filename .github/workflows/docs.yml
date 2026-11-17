@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - 'docs/**'
-      - 'src/voiceleaf/**'
+      - 'src/narruvo/**'
       - 'scripts/check_docs.py'
       - 'pyproject.toml'
       - 'README.md'
@@ -14,7 +14,7 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
-      - 'src/voiceleaf/**'
+      - 'src/narruvo/**'
       - 'scripts/check_docs.py'
       - 'pyproject.toml'
       - 'README.md'

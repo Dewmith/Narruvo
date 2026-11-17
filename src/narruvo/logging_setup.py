@@ -9,7 +9,7 @@ def configure_logging(directory: Path) -> None:
         level=logging.INFO,
         format="%(asctime)s %(processName)s %(levelname)s %(name)s: %(message)s",
         handlers=[
-            RotatingFileHandler(directory / "voiceleaf.log", maxBytes=2_000_000, backupCount=3, encoding="utf-8"),
+            RotatingFileHandler(directory / "narruvo.log", maxBytes=2_000_000, backupCount=3, encoding="utf-8"),
             logging.StreamHandler(),
         ],
         force=True,
