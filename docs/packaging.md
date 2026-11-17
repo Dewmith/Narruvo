@@ -110,6 +110,8 @@ The workflows in `.github/workflows/` have separate responsibilities:
 
 Official Actions are pinned to commit SHAs. Windows builds run on `windows-2022`, with Python 3.12 and the project's pinned dependencies. The built-in `GITHUB_TOKEN` is sufficient; only the asset-publishing job requests `contents: write`. Preparation and publication use the dependency-free `scripts/github_release.py` helper. The workflow completes the entire release itself: a release published using `GITHUB_TOKEN` does not trigger a second release workflow. See [GitHub token event behavior](https://docs.github.com/en/actions/concepts/security/github_token#when-github_token-triggers-workflow-runs).
 
+The helper finds drafts through authenticated, paginated release listings because GitHub's lookup by tag only returns published releases. This lets the publishing job retrieve new drafts and resume interrupted uploads without replacing their metadata.
+
 ## Publish an application release
 
 First confirm the intended code and workflows are on `main`, and wait for Windows CI to pass on the commit being released. Choose a new supported version tag. Either entry point produces the installer and checksum:

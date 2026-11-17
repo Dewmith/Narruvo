@@ -248,6 +248,8 @@ def test_concurrent_release_creation_is_reused(tmp_path):
 @pytest.mark.parametrize("status,missing", [(404, True), (401, False), (403, False), (500, False)])
 def test_only_http_404_means_a_release_is_missing(monkeypatch, status, missing):
     def command(arguments, **_kwargs):
+        if missing and "/releases?" in arguments[-1]:
+            return subprocess.CompletedProcess(arguments, 0, 'HTTP/2.0 200 OK\n\n[]', "")
         return subprocess.CompletedProcess(
             arguments, 1, f'HTTP/2.0 {status} Error\r\nContent-Type: application/json\r\n\r\n{{}}',
             f"GitHub HTTP {status}",
@@ -262,7 +264,7 @@ def test_only_http_404_means_a_release_is_missing(monkeypatch, status, missing):
             github.get_release(TAG)
 
 
-def test_github_json_response_and_release_commands(monkeypatch, tmp_path):
+def test_github_json_response_and_release_commands(monkeypatch):
     commands = []
 
     def command(arguments, **_kwargs):
@@ -283,6 +285,45 @@ def test_github_json_response_and_release_commands(monkeypatch, tmp_path):
     assert commands[-1] == [
         "gh", "release", "edit", TAG, "--repo", "example/Narruvo", "--draft=false",
     ]
+
+
+def test_draft_hidden_by_tag_endpoint_is_found_in_authenticated_listing(monkeypatch):
+    draft = {**release_record(draft=True), "tag_name": TAG}
+
+    def command(arguments, **_kwargs):
+        if "/releases/tags/" in arguments[-1]:
+            return subprocess.CompletedProcess(arguments, 1, 'HTTP/2.0 404 Not Found\n\n{}', "Not found")
+        return subprocess.CompletedProcess(arguments, 0, f'HTTP/2.0 200 OK\n\n{json.dumps([draft])}', "")
+
+    monkeypatch.setattr(releases.subprocess, "run", command)
+    assert releases.GitHub("example/Narruvo").get_release(TAG) == draft
+
+
+def test_draft_lookup_checks_later_pages(monkeypatch):
+    draft = {**release_record(draft=True), "tag_name": TAG}
+    endpoints = []
+
+    def command(arguments, **_kwargs):
+        endpoint = arguments[-1]
+        endpoints.append(endpoint)
+        if "/releases/tags/" in endpoint:
+            return subprocess.CompletedProcess(arguments, 1, 'HTTP/2.0 404 Not Found\n\n{}', "Not found")
+        candidates = [dict(draft, tag_name=f"v0.0.{i}") for i in range(100)] if endpoint.endswith("&page=1") else [draft]
+        return subprocess.CompletedProcess(arguments, 0, f'HTTP/2.0 200 OK\n\n{json.dumps(candidates)}', "")
+
+    monkeypatch.setattr(releases.subprocess, "run", command)
+    assert releases.GitHub("example/Narruvo").get_release(TAG) == draft
+    assert endpoints[-1].endswith("page=2")
+
+
+def test_draft_listing_authorization_error_does_not_mean_missing_release(monkeypatch):
+    def command(arguments, **_kwargs):
+        status = 404 if "/releases/tags/" in arguments[-1] else 403
+        return subprocess.CompletedProcess(arguments, 1, f'HTTP/2.0 {status} Error\n\n{{}}', f"HTTP {status}")
+
+    monkeypatch.setattr(releases.subprocess, "run", command)
+    with pytest.raises(RuntimeError, match="403"):
+        releases.GitHub("example/Narruvo").get_release(TAG)
 
 
 @pytest.mark.parametrize("event_name,should_build", [("push", "false"), ("workflow_dispatch", "true")])

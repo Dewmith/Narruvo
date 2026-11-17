@@ -31,7 +31,9 @@ class GitHub:
             encoding="utf-8", errors="replace", timeout=120, check=False,
         )
 
-    def _get(self, endpoint: str, *, missing_ok: bool = False) -> dict[str, Any] | None:
+    def _get(
+        self, endpoint: str, *, missing_ok: bool = False,
+    ) -> dict[str, Any] | list[dict[str, Any]] | None:
         response = self._run("api", "--method", "GET", "--include", endpoint)
         headers, separator, body = response.stdout.replace("\r\n", "\n").partition("\n\n")
         status = re.match(r"HTTP/\S+\s+(\d{3})\b", headers)
@@ -42,8 +44,8 @@ class GitHub:
         if not separator or not status or status[1] != "200":
             raise RuntimeError(f"Unexpected GitHub response for {endpoint}")
         result = json.loads(body)
-        if not isinstance(result, dict):
-            raise RuntimeError(f"Expected a GitHub object for {endpoint}")
+        if not isinstance(result, (dict, list)):
+            raise RuntimeError(f"Expected a GitHub object or array for {endpoint}")
         return result
 
     def _command(self, *arguments: str) -> None:
@@ -55,9 +57,26 @@ class GitHub:
         self._get(f"repos/{self.repository}/git/ref/tags/{quote(tag, safe='')}")
 
     def get_release(self, tag: str) -> dict[str, Any] | None:
-        return self._get(
+        release = self._get(
             f"repos/{self.repository}/releases/tags/{quote(tag, safe='')}", missing_ok=True,
         )
+        if release is not None:
+            if not isinstance(release, dict):
+                raise RuntimeError("Expected a GitHub release object")
+            return release
+        # The tag endpoint only returns published releases. Authenticated listing
+        # also exposes drafts to the publishing token, including interrupted runs.
+        page = 1
+        while True:
+            candidates = self._get(f"repos/{self.repository}/releases?per_page=100&page={page}")
+            if not isinstance(candidates, list):
+                raise RuntimeError("Expected a GitHub release listing")
+            for candidate in candidates:
+                if candidate.get("tag_name") == tag:
+                    return candidate
+            if len(candidates) < 100:
+                return None
+            page += 1
 
     def create_draft(self, tag: str, *, prerelease: bool) -> None:
         arguments = [
