@@ -1,0 +1,46 @@
+"""Desktop entry point. No server, account, or network initialization."""
+
+import argparse
+import logging
+import sys
+
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QApplication, QMessageBox
+
+from voiceleaf.config import AppPaths, Settings
+from voiceleaf.logging_setup import configure_logging
+from voiceleaf.ui.main_window import VoiceLeafWindow
+from voiceleaf.ui.theme import apply_theme
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="VoiceLeaf: an offline PDF audiobook reader")
+    parser.add_argument("pdf", nargs="?", help="Optional PDF to open")
+    parser.add_argument("--smoke-test", action="store_true", help="Open the main window briefly and exit, without first-run setup")
+    args = parser.parse_args(argv)
+    app = QApplication.instance() or QApplication(sys.argv[:1])
+    app.setApplicationName("VoiceLeaf")
+    app.setOrganizationName("VoiceLeaf")
+    apply_theme(app)
+    try:
+        paths = AppPaths.discover()
+        paths.ensure()
+        configure_logging(paths.logs)
+        settings = Settings.load(paths.settings_file)
+        window = VoiceLeafWindow(paths, settings, args.pdf, show_setup=not args.smoke_test)
+    except Exception as exc:
+        logging.getLogger(__name__).exception("Startup failed")
+        if not args.smoke_test:
+            QMessageBox.critical(None, "VoiceLeaf could not start", f"Check that the local data folder is writable and dependencies are installed.\n\n{exc}")
+        return 1
+
+    def exception_hook(exc_type, value, traceback):
+        logging.getLogger(__name__).error("Unhandled UI error", exc_info=(exc_type, value, traceback))
+        window.show_error(f"An unexpected error occurred. Details are in the local logs.\n\n{value}")
+
+    sys.excepthook = exception_hook
+    window.show()
+    if args.smoke_test:
+        QTimer.singleShot(2500, window.close)
+    logging.getLogger(__name__).info("VoiceLeaf started with Python %s", sys.version.split()[0])
+    return app.exec()
