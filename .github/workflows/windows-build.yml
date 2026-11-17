@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       release_tag:
-        description: Existing release tag to check out and validate; empty for CI
+        description: Existing release tag to check out and use as the package version; empty for CI
         type: string
         required: false
         default: ''
@@ -30,6 +30,12 @@ jobs:
           architecture: x64
           cache: pip
           cache-dependency-path: pyproject.toml
+      - name: Set package version from release tag
+        if: inputs.release_tag != ''
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: python scripts/package_metadata.py --release-tag $env:RELEASE_TAG --sync-version
       - name: Install pinned dependencies
         shell: pwsh
         run: |

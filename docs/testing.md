@@ -19,7 +19,7 @@ The default pytest configuration excludes the `integration` marker. Tests genera
 | `test_config.py`, `test_persistence.py` | Settings validation, content identity, saved progress, library removal |
 | `test_models.py`, `test_tts_cache.py` | Downloads/checksums/cancellation, paired audio/timing cache, pruning |
 | `test_ui.py` | Library, reader, setup dialog, responsive layout, saved progress |
-| `test_packaging.py` | Version/tag validation, model-free native workers, failures, watchdog cleanup |
+| `test_packaging.py` | Release version synchronization and validation, model-free native workers, failures, watchdog cleanup |
 
 UI tests default to Qt's offscreen platform. Generated screenshots and local verification audio belong under ignored `.artifacts/`.
 

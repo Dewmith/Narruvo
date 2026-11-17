@@ -13,10 +13,12 @@ Use Python 3.12 x64 on Windows and install [Inno Setup 6](https://jrsoftware.org
 .\scripts\build.ps1
 ```
 
-To validate a release tag and select a compiler explicitly:
+GitHub release builds synchronize the version automatically. To reproduce a release build locally, synchronize from the chosen tag **before installing the Python package**, then pass that tag to the build script. For example:
 
 ```powershell
-.\scripts\build.ps1 -ReleaseTag v0.1.0 -InnoCompiler 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+.\.venv\Scripts\python.exe scripts\package_metadata.py --release-tag v0.3.0 --sync-version
+.\.venv\Scripts\python.exe -m pip install -e '.[dev,build]'
+.\scripts\build.ps1 -ReleaseTag v0.3.0 -InnoCompiler 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
 ```
 
 | Output | Purpose |
@@ -31,9 +33,11 @@ Build and verification files are ignored by Git. The script rejects PDF/model/au
 
 ## Version contract
 
-`pyproject.toml` and `src/narruvo/__init__.py` must declare the same version. A release tag must be exactly `v<version>`, such as `v0.1.0` or `v0.2.0rc1`.
+The release tag is the version source for release builds. Publishing a tag such as `v0.3.0` makes the workflow set `0.3.0` in both `pyproject.toml` and `src/narruvo/__init__.py` in its build checkout, before installing dependencies. The Python package metadata, application version, executable resources, installer metadata, installer filename, and checksum filename therefore use that release version. No manual version bump is needed. The release's display title is not parsed; its tag supplies the version.
 
-The metadata helper validates agreement before bundling and derives numeric Windows version resources from the release components. Prerelease text is retained in the product version and installer filename. Version components must fit Windows resource limits.
+Use `v<major>.<minor>.<patch>`, optionally followed by `aN`, `bN`, `rcN`, `.postN`, or `.devN`, for example `v0.3.0rc1`. Components must not have leading zeroes, and the major, minor, and patch numbers must be at most 65535 for Windows resources. Prerelease text is retained in the product version and installer filename.
+
+Synchronization updates only the build checkout and does not commit files or move tags. Ordinary CI and local builds without a release tag use the checked-in development version. Both source declarations must still agree, and the metadata helper validates that agreement and the requested tag before bundling. When synchronizing locally, reinstall the Python package afterward so its installed metadata also uses the selected version.
 
 The installer has a stable application identity and default location under `%LOCALAPPDATA%\Programs\Narruvo`. It installs per user without administrator rights, adds a Start menu shortcut, and offers an optional desktop shortcut. Uninstall removes installed app files while preserving the separate data directory and original PDFs.
 
@@ -72,10 +76,11 @@ No model download occurs. This opts into loading existing models and generating 
 flowchart TB
     Release["Published release or manual tag rebuild"]
     Tag["Validate the published release and tag"]
-    Build["Test and package the exact tagged commit"]
+    Version["Set package versions from the release tag"]
+    Build["Install, test, and package the tagged source"]
     Verify["Verify workers, installation, and uninstall"]
     Assets["Attach installer and SHA-256 to the release"]
-    Release --> Tag --> Build --> Verify --> Assets
+    Release --> Tag --> Version --> Build --> Verify --> Assets
 ```
 :::
 
@@ -86,23 +91,27 @@ The workflows in `.github/workflows/` have separate responsibilities:
 | Workflow | Trigger and behavior |
 | --- | --- |
 | `ci.yml` | Pull requests, pushes to `main`, and manual runs; calls the shared Windows job |
-| `windows-build.yml` | Reusable tests, package compilation, installation verification, and artifact retention |
-| `release.yml` | Published releases and manual tag rebuilds; checks out the tag and uploads verified assets |
+| `windows-build.yml` | Release version synchronization, reusable tests, package compilation, installation verification, and artifact retention |
+| `release.yml` | Published releases and manual tag rebuilds; checks out the tag, uses its version, and uploads verified assets |
 | `docs.yml` | Documentation validation and publication from `main` |
 
 Official Actions are pinned to commit SHAs. Windows builds run on `windows-2022`, with Python 3.12 and the project's pinned dependencies. The built-in `GITHUB_TOKEN` is sufficient; only the asset-publishing job requests `contents: write`.
 
 ## Publish an application release
 
-1. Confirm the intended code, documentation, tests, and workflows are on `main`.
-2. Update both version declarations together and run the relevant checks.
+1. Confirm the intended code, documentation, tests, and workflows are on `main`, and wait for Windows CI to pass on the intended commit.
+2. Choose a new supported release tag, such as `v0.3.0`. Its version will be applied automatically during the release build.
 3. Keep immutable releases disabled for this publish-then-build workflow. Published immutable releases cannot accept added or replacement assets.
-4. Create a matching tag for the intended commit, then publish the release or prerelease on GitHub.
+4. Create a matching tag for that tested commit, then publish the release or prerelease on GitHub.
 5. Follow [Publish Windows release assets](https://github.com/Dewmith/Narruvo/actions/workflows/release.yml) and verify the resulting installer and checksum.
 
 Draft creation and tag pushes alone do not attach assets. A release stays published if a build fails, so source archives may appear before the executable is ready. Initial installers are unsigned; signing certificates are not part of the current pipeline.
 
 ## Recover a failed run
+
+A release tag must include the automatic version synchronization workflow and helper. Older tagged commits retain their original build behavior; updating `main` or rerunning an old release cannot change the workflow or source files stored at that tag.
+
+For an older failure such as `Release tag 'v0.2.0' must match project version v0.1.0`, keep the existing tag and release, commit and push the synchronization changes, and create a new release from the updated, tested commit. For example, publishing `v0.3.0` automatically builds `Narruvo-0.3.0-windows-x64-setup.exe` and its matching `.sha256` file, regardless of the checked-in development version.
 
 - For temporary build failures, inspect job output and the `windows-diagnostics` artifact, then rerun failed jobs.
 - If publishing alone failed, rerun that job to reuse its verified artifact.

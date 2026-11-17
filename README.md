@@ -43,11 +43,12 @@ Open [Releases](https://github.com/Dewmith/Narruvo/releases), expand **Assets**,
 
 The installer does not download voice models. On first launch, choose an explicit model download, select existing files, or postpone setup and use PDF viewing. Reading and narration work offline after model setup. Installation upgrades the same app location; uninstalling preserves `%LOCALAPPDATA%\Narruvo` and original PDFs.
 
-Initial installers are unsigned, so Windows may display an unknown-publisher or SmartScreen prompt. Download only from this repository's release assets. To compare an installer against its accompanying `.sha256` file:
+Initial installers are unsigned, so Windows may display an unknown-publisher or SmartScreen prompt. Download only from this repository's release assets. To compare an installer against its accompanying `.sha256` file, replace `<version>` with the downloaded version:
 
 ```powershell
-Get-FileHash .\Narruvo-0.1.0-windows-x64-setup.exe -Algorithm SHA256
-Get-Content .\Narruvo-0.1.0-windows-x64-setup.exe.sha256
+$installer = '.\Narruvo-<version>-windows-x64-setup.exe'
+Get-FileHash -LiteralPath $installer -Algorithm SHA256
+Get-Content -LiteralPath "$installer.sha256"
 ```
 
 ## AI model setup
