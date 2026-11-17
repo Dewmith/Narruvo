@@ -31,12 +31,27 @@ VoiceLeaf is a local Windows PDF audiobook reader. View a PDF and listen using n
 ## Requirements
 
 - **Windows 10 version 1809 or later, or Windows 11; x64.** Windows ARM64 and 32-bit Python are outside the MVP's tested target.
-- **Python 3.12 x64.** An unrelated Python 3.10 executable on PATH is insufficient.
-- Internet during dependency installation and the one-time ~354 MB model download.
+- **Python 3.12 x64 for development/source installs.** The Windows installer includes Python and app dependencies.
+- Internet during downloading/installing development dependencies and the explicit one-time ~354 MB model download.
 - Space for Python dependencies, 354 MB of models, and up to 2 GB of cached audio. 8 GB RAM is a practical starting point; CPU performance determines generation latency.
 - A Windows audio output for listening.
 
 Pinned core versions: PySide6 6.10.3, PyMuPDF 1.26.7, kokoro-onnx 0.6.1, soundfile 0.13.1, NumPy 2.5.5, and CPU onnxruntime 1.32.0. Development tools: pytest 9.2.0 and pytest-qt 4.5.0. Installation uses Windows wheels; a C++ compiler is not normally needed.
+
+## Install on Windows
+
+Open [Releases](https://github.com/Dewmith/Text2Voice/releases), expand **Assets**, and download `VoiceLeaf-<version>-windows-x64-setup.exe`. Run it to install for your Windows account, then open **VoiceLeaf** from the Start menu. Python, eSpeak, administrator rights, and a separate dependency setup are not required. Desktop shortcuts are optional.
+
+For a private repository, users need repository access to download its release assets.
+
+The installer does not download voice models. On first launch, choose an explicit model download, select existing files, or postpone setup and use PDF viewing. Reading and narration work offline after model setup. Installation upgrades the same app location; uninstalling preserves `%LOCALAPPDATA%\VoiceLeaf` and original PDFs.
+
+Initial installers are unsigned, so Windows may display an unknown-publisher or SmartScreen prompt. Download only from this repository's release assets. To compare an installer against its accompanying `.sha256` file:
+
+```powershell
+Get-FileHash .\VoiceLeaf-0.1.0-windows-x64-setup.exe -Algorithm SHA256
+Get-Content .\VoiceLeaf-0.1.0-windows-x64-setup.exe.sha256
+```
 
 ## Quick start in PowerShell
 
@@ -260,11 +275,62 @@ tests/                      Unit, UI, and opt-in real-model integration tests
 
 PyMuPDF runs exclusively in one process because its [documentation warns against multithreaded use](https://pymupdf.readthedocs.io/en/latest/recipes-multiprocessing.html). Kokoro runs in another process. Generation identifiers reject stale results after rapid controls or document changes. Qt widgets, media playback, and short persistence operations remain on the GUI thread. Shutdown saves progress, unloads audio, cancels queued tasks, and terminates isolated native workers when necessary.
 
+## Windows builds and release automation
+
+CI tests and builds the installer on every pull request, push to `main`, and manual **CI** run. The **Publish Windows release assets** workflow builds the exact tag when you publish a stable release or prerelease, then attaches the installer and SHA-256 file under that release's **Assets**. Creating a draft or pushing a tag alone does not publish installer assets. Files appear when the workflow finishes successfully.
+
+Both workflows reuse the same Windows build job with Python 3.12 x64, the pinned runtime dependencies, PyInstaller 6.22.3, and hooks 2026.10. Official actions are pinned to commit SHAs. CI runs ordinary tests without models, packages a windowed application bundle, compiles an Inno Setup installer, verifies the frozen and installed executables, then uninstalls the isolated test installation and checks that user data survives. Verification does not register a normal installation or create shortcuts.
+
+### Build locally
+
+Install [Inno Setup 6](https://jrsoftware.org/inno-setup/downloads), then use the repository's Python 3.12 virtual environment:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -e '.[dev,build]'
+.\.venv\Scripts\python.exe -m pip check
+.\.venv\Scripts\python.exe -m pytest
+.\scripts\build.ps1
+# Optionally validate the intended release tag and specify a compiler:
+.\scripts\build.ps1 -ReleaseTag v0.1.0 -InnoCompiler 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+```
+
+The verified installer and checksum are in `dist\release`. The unpacked application is in `dist\VoiceLeaf`. Build files and verification logs are ignored by Git. Do not commit binaries, models, PDFs, generated audio, databases, or logs. The build script rejects generated/private file types in the application bundle and isolates PATH during native dependency discovery to avoid collecting unrelated DLLs from other tools.
+
+`VoiceLeaf.exe --smoke-test` checks window startup. `VoiceLeaf.exe --verify-package` checks extraction and rendering in the PDF process plus CPU ONNX Runtime, American/British phonemization, and SoundFile in the TTS process. It exits with 0 on success or 1 on errors/timeouts, uses no network, and requires no models. Worker verification has a 60-second watchdog; the installer verifier also bounds child processes. Logs are under the selected data directory.
+
+For an explicit check using existing real models, set the integration-test variable before verification (no download occurs):
+
+```powershell
+$env:VOICELEAF_DATA_DIR = Join-Path $PWD '.artifacts\real-package-check'
+$env:VOICELEAF_TEST_MODELS = Join-Path $env:LOCALAPPDATA 'VoiceLeaf\models'
+$check = Start-Process -FilePath (Join-Path $PWD 'dist\VoiceLeaf\VoiceLeaf.exe') -ArgumentList '--verify-package' -WindowStyle Hidden -Wait -PassThru
+$check.ExitCode
+Get-Content (Join-Path $env:VOICELEAF_DATA_DIR 'logs\voiceleaf.log') -Tail 10
+Remove-Item Env:VOICELEAF_TEST_MODELS
+Remove-Item Env:VOICELEAF_DATA_DIR
+```
+
+Before the first public release, also install and open the packaged app, select existing model files, import a PDF, and confirm audible offline narration. Automated checks cannot confirm sound through a person's speakers. Windows 10 and 11 should be checked on real target machines; hosted Windows CI runs on Windows Server 2022.
+
+### Publish a release
+
+1. In **Settings → Actions → General**, allow the official GitHub Actions used by the workflows. Organization policy must permit the publishing job's `contents: write` permission. The workflows use the built-in `GITHUB_TOKEN`; no personal access token or repository secret is needed.
+2. Keep **immutable releases disabled** for this publish-then-build flow. GitHub blocks adding or replacing assets after an immutable release is published.
+3. Update both `pyproject.toml` and `src/voiceleaf/__init__.py` to the same version. A tag must be exactly `v<version>`, for example `v0.1.0` or `v0.2.0rc1`; the build rejects mismatches. Commit and push the reviewed changes and workflows yourself.
+4. Create a release for that commit with the matching tag and choose **Publish release**. For the first rollout, use a prerelease and verify the resulting downloads before promoting it.
+5. Follow **Actions → Publish Windows release assets**. After success, download the installer and checksum from **Releases → Assets**.
+
+CI and release builds retain a **windows-installer** artifact for 14 days, and test/package diagnostic logs for 7 days. A failed test, package check, or installation blocks uploading new release assets. The release itself remains published if a build fails; it may temporarily have only GitHub's source archives.
+
+To recover a temporary build failure, rerun the failed jobs from the Actions run. To rebuild an existing release explicitly, run **Publish Windows release assets** from **Actions → Run workflow** and enter its exact published tag. The tagged commit must already include the packaging files. A rerun replaces only the named installer and its checksum; other assets and release notes remain intact. If only publishing failed, rerun that job to reuse the verified build artifact. Replacement uploads delete the previous same-named assets first, so retry promptly after an upload interruption. Once artifacts expire, run the complete workflow again. A source-code fix needs a new version/tag rather than moving an existing release tag.
+
+See [GitHub release workflow events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#release), [immutable releases](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases), and [asset upload behavior](https://cli.github.com/manual/gh_release_upload).
+
 ## Roadmap
 
 1. Optional offline OCR for scanned PDFs.
 2. Improved chapter, table, footnote, and complex-layout handling.
-3. Windows installer/EXE packaging and broader audio-device testing.
+3. Signed Windows installers and broader audio-device testing.
 4. Word-level highlighting and richer bookmarks.
 5. Additional languages after validating their voices and phonemization.
 

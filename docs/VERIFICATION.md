@@ -54,7 +54,7 @@ Automated audio playback was **muted**. Decoding and playback state were verifie
 
 The native pytest run printed a Windows COM diagnostic (`0x8001010d`) while inside its nested Qt event loop; the complete test continued and passed with exit 0. The ordinary native application-entry smoke test exited 0 without that diagnostic.
 
-OCR, password entry, executable packaging, and general-purpose complex-PDF layout reconstruction remain outside the MVP. There are no outstanding installation or model-download blockers.
+OCR, password entry, and general-purpose complex-PDF layout reconstruction remain outside the MVP. There are no outstanding installation or model-download blockers. Windows executable packaging was added and verified in the update below.
 
 ## Synchronized line highlighting update
 
@@ -66,3 +66,18 @@ OCR, password entry, executable packaging, and general-purpose complex-PDF layou
 - Ran the full standard suite: **66 passed**. Ran all real-model integration tests with native Windows widgets: **4 passed**, including playback, voice/rate changes, highlighting, seeking, page transitions, and restart/resume. The native test harness printed the same COM diagnostic documented above, then exited 0.
 - Rechecked the updated native script entry point with `run.ps1 -SmokeTest`, Python compilation, dependency consistency, and whitespace checks; all passed.
 - Visually inspected `.artifacts/screenshots/line-highlighting.png`, showing the spoken line highlighted on page 2 while paused.
+
+## Windows installer and release automation update
+
+- Added shared Windows CI/build verification, CI on pull requests and `main`, and release uploads on published releases or manual rebuilds of existing release tags. The installer and `.sha256` are the only files uploaded to a release; publishing has a separate job with `contents: write`.
+- Pinned PyInstaller 6.22.3, hooks 2026.10, and official Actions commit SHAs. Application runtime versions remain unchanged. Local compilation used Inno Setup 6.7.4; `windows-2022` includes Inno Setup 6.
+- Ran the complete ordinary test suite: **76 passed, 4 integration tests deselected**. New cases cover version/tag mismatches, prerelease Windows metadata, real model-free worker checks, native worker failures, and watchdog cleanup. `pip check`, PowerShell parsing, actionlint 1.7.12, and whitespace checks passed.
+- Successfully ran `scripts/build.ps1 -ReleaseTag v0.1.0` with an explicit Inno compiler. The unpacked executable and silently installed executable both passed `--verify-package` and `--smoke-test`. Installer verification removed development directories from PATH and unset Python environment overrides.
+- Explicitly opted into existing models through `VOICELEAF_TEST_MODELS` for the final local build. Both unpacked and installed builds generated real CPU narration (approximately 2.73 seconds of audio). No models were downloaded or included in the installer. Normal CI checks do not set a model directory.
+- The isolated per-user installation was uninstalled successfully. All files in its application-data directory retained their SHA-256 hashes, including settings, the library database, logs, and a preservation marker. Test installation mode suppresses normal uninstall registration and shortcuts.
+- Found and resolved an initial native startup error caused by an unrelated tool's incompatible ICU DLL being discovered through the host PATH. The build now isolates native dependency discovery to the Python runtime and Windows directories. The final dependency manifest contains no copies from the unrelated tool runtime.
+- The final installer and checksum are under ignored `dist/release/`; package verification logs and development tools are under ignored `.artifacts/`. Installer checks ran in a regular Windows user context because the app sandbox blocks Windows known-folder resolution. No Git commits, pushes, branches, releases, or repository-setting changes were made.
+
+Read-only GitHub inspection confirmed `main` as the default branch, Actions enabled with all actions allowed, and read-only default workflow-token permissions. The publishing job explicitly requests the additional permission it needs. The repository is currently private and has no releases; release downloads require repository access. Immutable releases must remain disabled for the selected publish-then-build flow.
+
+A GitHub prerelease run after pushing these changes is still needed to validate hosted runner execution and actual release uploads. Audible output and Windows 10 hardware still require the manual checks described above; automated packaged synthesis does not confirm speakers/headphones.

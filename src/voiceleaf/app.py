@@ -16,7 +16,9 @@ from voiceleaf.ui.theme import apply_theme
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="VoiceLeaf: an offline PDF audiobook reader")
     parser.add_argument("pdf", nargs="?", help="Optional PDF to open")
-    parser.add_argument("--smoke-test", action="store_true", help="Open the main window briefly and exit, without first-run setup")
+    checks = parser.add_mutually_exclusive_group()
+    checks.add_argument("--smoke-test", action="store_true", help="Open the main window briefly and exit, without first-run setup")
+    checks.add_argument("--verify-package", action="store_true", help="Verify native workers offline and exit (no models required)")
     args = parser.parse_args(argv)
     app = QApplication.instance() or QApplication(sys.argv[:1])
     app.setApplicationName("VoiceLeaf")
@@ -26,11 +28,14 @@ def main(argv: list[str] | None = None) -> int:
         paths = AppPaths.discover()
         paths.ensure()
         configure_logging(paths.logs)
+        if args.verify_package:
+            from voiceleaf.package_verification import verify_package
+            return verify_package(paths)
         settings = Settings.load(paths.settings_file)
         window = VoiceLeafWindow(paths, settings, args.pdf, show_setup=not args.smoke_test)
     except Exception as exc:
         logging.getLogger(__name__).exception("Startup failed")
-        if not args.smoke_test:
+        if not (args.smoke_test or args.verify_package):
             QMessageBox.critical(None, "VoiceLeaf could not start", f"Check that the local data folder is writable and dependencies are installed.\n\n{exc}")
         return 1
 

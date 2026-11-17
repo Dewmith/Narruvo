@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
 
-from voiceleaf.domain import PageText, PdfInfo, PdfLine, TextBlock
+from voiceleaf.domain import PackageCheckResult, PageText, PdfInfo, PdfLine, TextBlock
 
 
 class PdfError(ValueError):
@@ -27,6 +27,27 @@ class PdfService:
         self.module = pymupdf
         self.document = None
         self.pages: dict[int, PageText] = {}
+
+    def verify_runtime(self, directory: str) -> PackageCheckResult:
+        """Exercise native PDF resources inside the dedicated PDF process."""
+        path = Path(directory) / "package-check.pdf"
+        try:
+            with self.module.open() as document:
+                page = document.new_page()
+                page.insert_text((50, 100), "VoiceLeaf package verification.")
+                document.save(path)
+            info = self.open(str(path))
+            page = self.extract(0)
+            rendered = self.render(0, 0.5)
+            _, chunks = self.finalize()
+            if (info.page_count != 1 or not page.blocks or not chunks or
+                    rendered.width <= 0 or rendered.height <= 0 or
+                    len(rendered.samples) != rendered.height * rendered.stride):
+                raise PdfError("Packaged PDF extraction or rendering failed")
+            return PackageCheckResult("pdf", f"Extracted and rendered {rendered.width}x{rendered.height} RGB pixels")
+        finally:
+            self.close()
+            path.unlink(missing_ok=True)
 
     def close(self) -> None:
         if self.document is not None:

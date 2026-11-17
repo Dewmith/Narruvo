@@ -6,10 +6,11 @@ import logging
 import os
 import re
 from dataclasses import asdict
+from io import BytesIO
 from pathlib import Path
 from uuid import uuid4
 
-from voiceleaf.domain import AudioResult, SpeechCue, SynthesisRequest
+from voiceleaf.domain import AudioResult, PackageCheckResult, SpeechCue, SynthesisRequest
 from voiceleaf.models import file_digest
 from voiceleaf.text import PROCESSING_VERSION
 from voiceleaf.timing import align_cues, estimated_cues
@@ -98,6 +99,42 @@ class KokoroEngine:
         self.engine = None
         self.model_fingerprint = ""
         self.voices: list[str] = []
+
+    def verify_runtime(self, model_directory: str | None = None) -> PackageCheckResult:
+        """Check bundled native libraries without downloading or requiring models."""
+        import importlib.metadata
+
+        import numpy as np
+        import onnxruntime as ort
+        import soundfile as sf
+        from kokoro_onnx.tokenizer import Tokenizer
+
+        if "CPUExecutionProvider" not in ort.get_available_providers():
+            raise RuntimeError("The packaged ONNX Runtime CPU provider is unavailable")
+        # Kokoro uses package metadata at runtime, including in frozen builds.
+        importlib.metadata.version("kokoro-onnx")
+        tokenizer = Tokenizer()
+        for language in ("en-us", "en-gb"):
+            if not tokenizer.phonemize("VoiceLeaf reads offline.", lang=language):
+                raise RuntimeError(f"Packaged eSpeak resources failed for {language}")
+        samples = np.sin(np.arange(2400) * (2 * np.pi * 440 / 24000)).astype(np.float32) * 0.1
+        buffer = BytesIO()
+        sf.write(buffer, samples, 24000, format="WAV", subtype="PCM_16")
+        buffer.seek(0)
+        decoded, sample_rate = sf.read(buffer)
+        if sample_rate != 24000 or len(decoded) != len(samples) or not np.isfinite(decoded).all():
+            raise RuntimeError("Packaged SoundFile could not round-trip PCM audio")
+        detail = "CPU ONNX Runtime, English phonemization, and PCM audio verified without models"
+        # This is deliberately opt-in, using the same variable as integration tests.
+        if model_directory:
+            root = Path(model_directory)
+            voices = self.initialize(str(root / "kokoro-v1.0.onnx"), str(root / "voices-v1.0.bin"))
+            voice = "af_heart" if "af_heart" in voices else voices[0]
+            result = self.create(SynthesisRequest("VoiceLeaf reads your books entirely offline.", voice, 1.0))
+            if result.duration_ms <= 0:
+                raise RuntimeError("Packaged model synthesis returned no audio")
+            detail += f"; real CPU synthesis verified ({result.duration_ms} ms)"
+        return PackageCheckResult("tts", detail)
 
     def initialize(self, model_path: str, voices_path: str) -> list[str]:
         import onnxruntime as ort

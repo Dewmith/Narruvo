@@ -5,6 +5,12 @@ from hashlib import sha256
 
 
 @dataclass(frozen=True)
+class PackageCheckResult:
+    component: str
+    detail: str
+
+
+@dataclass(frozen=True)
 class PdfInfo:
     document_id: str
     path: str

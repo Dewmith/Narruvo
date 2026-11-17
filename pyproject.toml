@@ -20,6 +20,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest==9.2.0", "pytest-qt==4.5.0"]
+build = ["pyinstaller==6.22.3", "pyinstaller-hooks-contrib==2026.10"]
 
 [project.scripts]
 voiceleaf = "voiceleaf.app:main"
