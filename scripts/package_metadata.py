@@ -27,6 +27,13 @@ def _version_metadata(version: object) -> dict[str, str]:
     }
 
 
+def metadata_for_tag(release_tag: str) -> dict[str, str]:
+    """Validate a release tag without reading or changing the source versions."""
+    if not release_tag.startswith("v"):
+        raise ValueError("Use a release tag such as v1.2.3 or v1.2.3rc1")
+    return _version_metadata(release_tag[1:])
+
+
 def _metadata_from_sources(project_source: str, package_source: str, release_tag: str) -> dict[str, str]:
     version = tomllib.loads(project_source)["project"]["version"]
     metadata = _version_metadata(version)
@@ -68,9 +75,7 @@ def sync_version(root: Path, release_tag: str) -> None:
     Validate the tag and both proposed files before writing either file. Only the
     build checkout is changed; this function never creates commits or moves tags.
     """
-    if not release_tag.startswith("v"):
-        raise ValueError("Use a release tag such as v1.2.3 or v1.2.3rc1")
-    version = _version_metadata(release_tag[1:])["version"]
+    version = metadata_for_tag(release_tag)["version"]
     project_path = root / "pyproject.toml"
     package_path = root / "src" / "narruvo" / "__init__.py"
     project_source = project_path.read_bytes().decode("utf-8")
