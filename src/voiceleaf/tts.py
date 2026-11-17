@@ -4,15 +4,19 @@ import hashlib
 import json
 import logging
 import os
+import re
+from dataclasses import asdict
 from pathlib import Path
 from uuid import uuid4
 
-from voiceleaf.domain import AudioResult, SynthesisRequest
+from voiceleaf.domain import AudioResult, SpeechCue, SynthesisRequest
 from voiceleaf.models import file_digest
 from voiceleaf.text import PROCESSING_VERSION
+from voiceleaf.timing import align_cues, estimated_cues
 
 log = logging.getLogger(__name__)
 CACHE_LIMIT = 2 * 1024 ** 3
+AUDIO_VERSION = "voiceleaf-audio-v2-timed"
 
 
 class AudioCache:
@@ -24,6 +28,10 @@ class AudioCache:
     def path_for(self, key: str) -> Path:
         return self.directory / f"{key}.wav"
 
+    @staticmethod
+    def timing_path(path: Path) -> Path:
+        return path.with_suffix(".timings.json")
+
     def lookup(self, key: str) -> AudioResult | None:
         import soundfile as sf
 
@@ -34,28 +42,54 @@ class AudioCache:
             info = sf.info(path)
             if info.frames <= 0 or info.samplerate <= 0 or info.channels != 1:
                 raise ValueError("Invalid cached audio")
+            duration_ms = round(info.duration * 1000)
+            metadata = json.loads(self.timing_path(path).read_text(encoding="utf-8"))
+            if metadata["version"] != 1 or abs(metadata["duration_ms"] - duration_ms) > 1:
+                raise ValueError("Invalid cached timing metadata")
+            cues = tuple(SpeechCue(**value) for value in metadata["cues"])
+            previous_end = 0
+            previous_text_end = 0
+            for cue in cues:
+                if (any(type(value) is not int for value in asdict(cue).values()) or
+                    not previous_end <= cue.start_ms <= cue.end_ms <= duration_ms or
+                    not previous_text_end <= cue.text_start < cue.text_end <= metadata["text_length"]):
+                    raise ValueError("Invalid cached speech timing")
+                previous_end, previous_text_end = cue.end_ms, cue.text_end
+            if not cues or type(metadata["estimated"]) is not bool:
+                raise ValueError("Missing cached speech timing")
             path.touch()
-            return AudioResult(str(path), round(info.duration * 1000), True)
-        except (OSError, ValueError, RuntimeError):
+            return AudioResult(str(path), duration_ms, True, cues, metadata["estimated"])
+        except (OSError, ValueError, RuntimeError, KeyError, TypeError):
             log.warning("Discarding unreadable audio cache entry %s", path.name)
             path.unlink(missing_ok=True)
+            self.timing_path(path).unlink(missing_ok=True)
             return None
 
     def prune(self, protected: tuple[str, ...] = (), clear: bool = False) -> None:
         protected_paths = {Path(p).resolve() for p in protected}
         files = sorted(self.directory.glob("*.wav"), key=lambda p: p.stat().st_mtime)
-        size = sum(p.stat().st_size for p in files)
+        def pair_size(path):
+            metadata = self.timing_path(path)
+            return path.stat().st_size + (metadata.stat().st_size if metadata.is_file() else 0)
+        size = sum(pair_size(p) for p in files)
         for path in files:
             if not clear and size <= self.limit:
                 break
             if path.resolve() in protected_paths:
                 continue
             try:
-                amount = path.stat().st_size
+                amount = pair_size(path)
                 path.unlink()
+                self.timing_path(path).unlink(missing_ok=True)
                 size -= amount
             except OSError:
                 log.warning("Could not remove cached audio %s", path.name, exc_info=True)
+        for metadata in self.directory.glob("*.timings.json"):
+            if not metadata.with_name(metadata.name.removesuffix(".timings.json") + ".wav").exists():
+                try:
+                    metadata.unlink()
+                except OSError:
+                    log.warning("Could not remove orphaned timing data %s", metadata.name)
 
 
 class KokoroEngine:
@@ -86,7 +120,7 @@ class KokoroEngine:
         return self.voices
 
     def cache_key(self, request: SynthesisRequest) -> str:
-        value = [PROCESSING_VERSION, "kokoro-onnx-0.6.1", self.model_fingerprint, request.text, request.voice, request.language, request.rate]
+        value = [AUDIO_VERSION, PROCESSING_VERSION, "kokoro-onnx-0.6.1", self.model_fingerprint, request.text, request.voice, request.language, request.rate]
         return hashlib.sha256(json.dumps(value, ensure_ascii=False).encode("utf-8")).hexdigest()
 
     def create(self, request: SynthesisRequest, protected: tuple[str, ...] = ()) -> AudioResult:
@@ -103,19 +137,40 @@ class KokoroEngine:
         cached = self.cache.lookup(key)
         if cached:
             return cached
-        samples, sample_rate = self.engine.create(request.text, voice=request.voice, speed=request.rate, lang=request.language)
+        samples, sample_rate, timings = self.engine.create_timed(request.text, voice=request.voice, speed=request.rate, lang=request.language)
         samples = np.asarray(samples).reshape(-1)
         if not len(samples) or not np.isfinite(samples).all() or float(np.max(np.abs(samples))) < 1e-6:
             raise ValueError("The voice engine returned empty or silent audio. Try another voice or section.")
+        duration_ms = round(len(samples) / sample_rate * 1000)
+        cues, estimated = self._speech_cues(request, timings, duration_ms)
         destination = self.cache.path_for(key)
         temporary = self.cache.directory / f".{key}.{uuid4().hex}.part"
+        timing_temporary = self.cache.directory / f".{key}.{uuid4().hex}.part"
         try:
             sf.write(temporary, samples, sample_rate, format="WAV", subtype="PCM_16")
+            timing_temporary.write_text(json.dumps({
+                "version": 1, "duration_ms": duration_ms, "text_length": len(request.text),
+                "estimated": estimated, "cues": [asdict(cue) for cue in cues],
+            }), encoding="utf-8")
             temporary.replace(destination)
+            timing_temporary.replace(self.cache.timing_path(destination))
         finally:
             temporary.unlink(missing_ok=True)
+            timing_temporary.unlink(missing_ok=True)
         self.cache.prune((*protected, str(destination)))
-        return AudioResult(str(destination), round(len(samples) / sample_rate * 1000), False)
+        return AudioResult(str(destination), duration_ms, False, cues, estimated)
+
+    def _speech_cues(self, request, timings, duration_ms):
+        if timings:
+            try:
+                from phonemizer import phonemize
+                words = re.findall(r"\S+", request.text)
+                pronunciations = phonemize(words, language=request.language, preserve_punctuation=True, with_stress=True, njobs=1)
+                pronunciations = [self.engine.tokenizer.known(value) for value in pronunciations]
+                return align_cues(request.text, timings, pronunciations, duration_ms)
+            except Exception:
+                log.warning("Word alignment unavailable; estimating highlight timing", exc_info=True)
+        return estimated_cues(request.text, duration_ms), True
 
     def clear_cache(self) -> None:
         self.cache.prune(clear=True)

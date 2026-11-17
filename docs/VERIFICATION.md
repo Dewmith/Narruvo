@@ -20,7 +20,7 @@ Commands were run from the repository. Longer commands below omit only the expli
 | `.venv\Scripts\python.exe -m pip install -e '.[dev]'` | Successful |
 | `.\scripts\setup.ps1` | Successful, including automatic Python 3.12 discovery |
 | `.venv\Scripts\python.exe scripts\download_models.py --yes` | Both model files downloaded and verified |
-| `.venv\Scripts\python.exe -m pytest -q` | **53 passed**, 4 integration tests deselected |
+| `.venv\Scripts\python.exe -m pytest -q` | **66 passed**, 4 integration tests deselected |
 | Real synthesis and Qt playback integration checks | **3 passed** |
 | Full PDF window integration with `QT_QPA_PLATFORM=windows` | **1 passed** |
 | `.venv\Scripts\python.exe -m voiceleaf --smoke-test` | Exit 0 on native Windows and offscreen platforms |
@@ -55,3 +55,14 @@ Automated audio playback was **muted**. Decoding and playback state were verifie
 The native pytest run printed a Windows COM diagnostic (`0x8001010d`) while inside its nested Qt event loop; the complete test continued and passed with exit 0. The ordinary native application-entry smoke test exited 0 without that diagnostic.
 
 OCR, password entry, executable packaging, and general-purpose complex-PDF layout reconstruction remain outside the MVP. There are no outstanding installation or model-download blockers.
+
+## Synchronized line highlighting update
+
+- Preserved physical PDF line rectangles through whitespace normalization, dehyphenation, column ordering, and chunk boundaries.
+- Used Kokoro's phoneme durations plus batched offline word pronunciation alignment to follow the spoken line. Heart and Michael each produced 17 source-word cues for the real sample, with model timings rather than estimated timing.
+- Added a green overlay to the PDF and corresponding Text view selection, automatic scrolling, and a Highlight toggle. Pause holds the current line; seeking updates it immediately; stop/document changes clear it.
+- Verified correct geometry at different zoom levels, high DPI, and all four page rotations; repeated text, Unicode, and hyphenated words retain their own coordinates.
+- Cached word timing metadata beside each WAV and tested corrupt metadata recovery and paired cache removal. Existing model files and reading progress require no migration; older audio cache entries may be regenerated once.
+- Ran the full standard suite: **66 passed**. Ran all real-model integration tests with native Windows widgets: **4 passed**, including playback, voice/rate changes, highlighting, seeking, page transitions, and restart/resume. The native test harness printed the same COM diagnostic documented above, then exited 0.
+- Rechecked the updated native script entry point with `run.ps1 -SmokeTest`, Python compilation, dependency consistency, and whitespace checks; all passed.
+- Visually inspected `.artifacts/screenshots/line-highlighting.png`, showing the spoken line highlighted on page 2 while paused.

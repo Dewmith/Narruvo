@@ -8,6 +8,7 @@ VoiceLeaf is a local Windows PDF audiobook reader. View a PDF and listen using n
 - Page navigation, fit-width/fit-page/manual zoom, and PDF drag-and-drop.
 - Installed American and British English voices, 0.5×–2.0× narration speed, volume, play/pause/resume/stop, previous/next section, and seeking within generated audio.
 - Page-aware sentence/paragraph chunks, automatic section/page continuation, and two sections prepared ahead.
+- Synchronized line highlighting in the PDF and Text view, with automatic scrolling to the spoken line.
 - SQLite library and saved page, section, audio position, active voice/rate, and preferred voice/rate.
 - Explicit model setup with progress, cancellation, checksums, retry, and manual file selection.
 - Reusable audio cache limited to 2 GB, local settings, and diagnostic logs.
@@ -106,6 +107,10 @@ Voice and speed changes apply to the **next section**. The current audio retains
 
 The slider shows the **current section**, not whole-book time. Kokoro generates speech at the selected rate. Audio is cached separately for each text/voice/rate/model combination.
 
+**Highlight** is enabled by default. The current PDF line is tinted green and kept in view; Text view highlights the same source line. The highlight stays put while paused, follows seeking, and clears when you stop or change documents. Turn off **Highlight** in the reader toolbar to browse without automatic following. A word split across two PDF lines can briefly highlight both lines.
+
+Highlighting uses the model's phoneme timings, aligned to the extracted text. Older manually selected models without duration output use approximate timing. Previously generated sections may be regenerated once to add cached timing data; existing models and saved reading positions remain usable.
+
 Progress is saved every five seconds and on key playback/navigation actions, document changes, and exit. Reopening restores page, section, and feasible audio offset without autoplay. The last available document reopens at startup. Changed PDF contents reset incompatible progress; identical contents at a new location retain their identity.
 
 Double-click a library entry or choose **Open selected**. Its context menu offers **Locate PDF**. Removing an entry never deletes the original PDF. Selecting different contents during relocation opens a separate document.
@@ -127,7 +132,7 @@ settings.json          Preferences and selected model paths
 library.sqlite3        Library metadata and reading progress
 library.sqlite3-*      SQLite transaction files, when present
 models/                Downloaded models
-audio/                 Generated WAV cache, limited to 2 GB
+audio/                 Generated WAVs and timing sidecars, limited to 2 GB
 logs/                  Application and worker logs
 ```
 
@@ -184,6 +189,7 @@ The real entry point also supports a brief launch check, without first-run setup
 2. Select Heart and confirm narration is audible through speakers/headphones.
 3. Pause/resume, change volume, and seek within the generated section.
 4. Select Michael and a different speed; confirm the next section uses them.
+   Confirm the green highlight follows the spoken PDF line, including after a seek; use **Highlight** to turn following off/on.
 5. Let playback cross sections and pages; confirm the viewer follows.
 6. Navigate to another page; confirm narration stops and Play starts its readable text.
 7. Close while paused, reopen, and confirm the saved page/section/position.
@@ -226,6 +232,7 @@ src/voiceleaf/
   config.py                 Application paths and validated settings
   documents.py, pdf.py       Async coordination and isolated PDF service
   text.py                   Layout cleanup and page-bound chunking
+  timing.py                 Phoneme-to-word timing alignment for line following
   models.py                 Model manifest, checksums, and downloads
   tts.py                    CPU synthesis and atomic WAV cache
   audio.py, playback.py      Qt adapter and narration state machine

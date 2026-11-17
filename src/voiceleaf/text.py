@@ -3,9 +3,11 @@
 import math
 import re
 import unicodedata
+from bisect import bisect_left
 from collections import Counter
+from dataclasses import replace
 
-from voiceleaf.domain import PageText, TextBlock, TextChunk
+from voiceleaf.domain import PageLine, PageText, PreparedPage, ReadingLine, TextBlock, TextChunk
 
 PROCESSING_VERSION = "voiceleaf-text-v1"
 
@@ -54,13 +56,34 @@ def reading_order(blocks: list[TextBlock], width: float) -> list[TextBlock]:
     return result
 
 
-def clean_pages(pages: list[PageText]) -> list[tuple[int, str]]:
+def _block_lines(block: TextBlock) -> tuple[str, list[PageLine]]:
+    if not block.lines:
+        return normalize_text(block.text), []
+    text = ""
+    lines: list[PageLine] = []
+    for source in block.lines:
+        value = normalize_text(source.text)
+        if not value:
+            continue
+        dehyphenate = bool(re.search(r"[A-Za-z]-$", text) and re.match(r"[a-z]", value))
+        if dehyphenate:
+            text = text[:-1]
+            lines[-1] = replace(lines[-1], end=len(text))
+        elif text:
+            text += " "
+        start = len(text)
+        text += value
+        lines.append(PageLine(start, len(text), source.rect))
+    return text, lines
+
+
+def prepare_pages(pages: list[PageText]) -> list[PreparedPage]:
     signatures: Counter = Counter()
     for page in pages:
         signatures.update({_signature(b, page.height) for b in page.blocks if _margin(b, page.height)})
     threshold = max(3, math.ceil(len(pages) * 0.7))
     repeated = {sig for sig, count in signatures.items() if count >= threshold and sig[1]}
-    cleaned: list[tuple[int, str]] = []
+    cleaned: list[PreparedPage] = []
     for page in pages:
         body: list[TextBlock] = []
         for block in page.blocks:
@@ -70,8 +93,60 @@ def clean_pages(pages: list[PageText]) -> list[tuple[int, str]]:
             if _margin(block, page.height) and value == str(page.page_index + 1):
                 continue
             body.append(block)
-        cleaned.append((page.page_index, "\n\n".join(normalize_text(b.text) for b in reading_order(body, page.width))))
+        text = ""
+        lines: list[PageLine] = []
+        for block in reading_order(body, page.width):
+            value, block_lines = _block_lines(block)
+            if text:
+                text += "\n\n"
+            offset = len(text)
+            text += value
+            lines.extend(replace(line, start=line.start + offset, end=line.end + offset) for line in block_lines)
+        cleaned.append(PreparedPage(page.page_index, text, tuple(lines)))
     return cleaned
+
+
+def clean_pages(pages: list[PageText]) -> list[tuple[int, str]]:
+    return [(page.page_index, page.text) for page in prepare_pages(pages)]
+
+
+def _canonical_positions(text: str) -> tuple[str, list[int]]:
+    """Collapse whitespace while retaining a map back to the displayed page text."""
+    parts: list[str] = []
+    positions: list[int] = []
+    for match in re.finditer(r"\S+", text):
+        if parts:
+            parts.append(" ")
+            positions.append(match.start() - 1)
+        parts.append(match[0])
+        positions.extend(range(match.start(), match.end()))
+    return "".join(parts), positions
+
+
+def chunk_prepared_pages(pages: list[PreparedPage], target: int = 400, maximum: int = 600) -> list[TextChunk]:
+    chunks = chunk_pages([(page.page_index, page.text) for page in pages], target, maximum)
+    layouts = {page.page_index: page for page in pages}
+    canonical = {page.page_index: _canonical_positions(page.text) for page in pages}
+    cursors: dict[int, int] = {}
+    result: list[TextChunk] = []
+    for chunk in chunks:
+        page = layouts[chunk.page_index]
+        text, positions = canonical[chunk.page_index]
+        start = text.find(chunk.text, cursors.get(chunk.page_index, 0))
+        if start < 0:
+            # Keep narration available if an unusual PDF cannot be mapped.
+            result.append(chunk)
+            continue
+        end = start + len(chunk.text)
+        cursors[chunk.page_index] = end
+        lines = []
+        for line in page.lines:
+            line_start = max(start, bisect_left(positions, line.start))
+            line_end = min(end, bisect_left(positions, line.end))
+            if line_start < line_end:
+                lines.append(ReadingLine(line_start - start, line_end - start, line.start, line.end, line.rect))
+        result.append(replace(chunk, lines=tuple(lines)))
+    return result
 
 
 def _sentences(paragraph: str) -> list[str]:

@@ -405,6 +405,11 @@ class VoiceLeafWindow(QMainWindow):
         if not hasattr(self, "bar"):
             return
         self.bar.refresh(self.playback, self.current_info.title if self.current_info else None)
+        cue = self.playback.reading_cue
+        if cue is not None and self.playback.chunks:
+            self.viewer.set_reading_highlight(self.playback.chunks[self.playback.index], cue)
+        else:
+            self.viewer.clear_reading_highlight()
         self.model_status.setText(f"{len(self.playback.voices)} English voices available · CPU inference · offline" if self.playback.ready else "Voices are loading…" if self.playback.init_job is not None else "Set up Kokoro model files to enable narration. PDF viewing works without them.")
 
     def _refresh_library(self) -> None:

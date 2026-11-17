@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from PySide6.QtCore import QObject, Signal
 
-from voiceleaf.domain import AudioResult, ReadingProgress, TextChunk
+from voiceleaf.domain import AudioResult, ReadingProgress, SpeechCue, TextChunk
 from voiceleaf.playback import PlaybackController
 
 
@@ -227,4 +227,22 @@ def test_changed_chunk_resets_incompatible_offset(player):
     controller, _, _ = player
     controller.load(controller.chunks, ReadingProgress(2, 1, 9000, chunk_hash="old chunk"))
     assert controller.index == 4 and controller.position_ms == 0
+
+
+def test_spoken_cue_follows_seek_and_pause_and_clears_on_stop(player, tmp_path):
+    controller, worker, audio = player
+    controller.play()
+    result = AudioResult(str(tmp_path / "timed.wav"), 2000, False, (
+        SpeechCue(100, 700, 0, 7), SpeechCue(900, 1500, 8, 10),
+    ))
+    worker.result.emit(1, result)
+    assert controller.reading_cue == result.cues[0]
+    audio.position_changed.emit(1000)
+    assert controller.reading_cue == result.cues[1]
+    controller.pause()
+    assert controller.reading_cue == result.cues[1]
+    controller.seek(250)
+    assert controller.reading_cue == result.cues[0]
+    controller.stop()
+    assert controller.reading_cue is None
 

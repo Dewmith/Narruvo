@@ -1,6 +1,7 @@
 """Opt-in real-model and real-multimedia checks; never download anything."""
 
 import os
+import re
 from pathlib import Path
 
 import numpy as np
@@ -46,8 +47,10 @@ def test_real_offline_cpu_synthesis(real_engine, voice, rate):
     samples, sample_rate = sf.read(result.path)
     assert sample_rate == 24000 and result.duration_ms > 1000
     assert np.isfinite(samples).all() and np.max(np.abs(samples)) > 0.01
+    assert [request.text[cue.text_start:cue.text_end] for cue in result.cues] == re.findall(r"\S+", request.text)
+    assert all(0 <= cue.start_ms <= cue.end_ms <= result.duration_ms for cue in result.cues)
     assert real_engine.create(request).cache_hit
-    print(f"CPU voice={voice} rate={rate} duration={result.duration_ms}ms WAV={result.path}")
+    print(f"CPU voice={voice} rate={rate} duration={result.duration_ms}ms cues={len(result.cues)} estimated={result.estimated_timings} WAV={result.path}")
 
 
 def test_real_worker_and_qt_playback_pause_seek_and_continuation(qtbot, tmp_path):
@@ -109,6 +112,9 @@ def test_real_pdf_window_full_reading_flow(qtbot, qapp, tmp_path, sample_pdf):
         qtbot.mouseClick(window.bar.play, Qt.MouseButton.LeftButton)
         qtbot.waitUntil(lambda: window.playback.state == "PLAYING" or bool(failures), timeout=60000)
         assert not failures
+        qtbot.waitUntil(lambda: bool(window.viewer.page_image.highlight_rects), timeout=5000)
+        assert window.playback.reading_cue is not None
+        assert window.viewer.text.extraSelections()
         voice_index = window.bar.voice.findData("am_michael")
         assert voice_index >= 0
         window.bar.voice.setCurrentIndex(voice_index)
@@ -124,9 +130,18 @@ def test_real_pdf_window_full_reading_flow(qtbot, qapp, tmp_path, sample_pdf):
         assert not failures
         assert window.current_page == 1
         assert window.playback.active_voice == "am_michael" and window.playback.active_rate == 1.25
+        qtbot.waitUntil(lambda: bool(window.viewer.page_image.highlight_rects), timeout=5000)
         qtbot.mouseClick(window.bar.play, Qt.MouseButton.LeftButton)
         window.playback.seek(1000)
         qtbot.waitUntil(lambda: abs(window.playback.position_ms - 1000) < 150, timeout=5000)
+        highlighted = window.viewer.page_image.highlight_rects
+        assert highlighted
+        qtbot.wait(150)
+        assert window.viewer.page_image.highlight_rects == highlighted
+        window.viewer.highlight_toggle.setChecked(False)
+        assert not window.viewer.page_image.highlight_rects
+        window.viewer.highlight_toggle.setChecked(True)
+        assert window.viewer.page_image.highlight_rects
         window.save_progress()
         expected = window.playback.snapshot(window.current_page)
         artifacts = Path(__file__).resolve().parents[1] / ".artifacts" / "screenshots"
@@ -134,6 +149,7 @@ def test_real_pdf_window_full_reading_flow(qtbot, qapp, tmp_path, sample_pdf):
         window.resize(1024, 768)
         qtbot.wait(300)
         assert window.grab().save(str(artifacts / "real-reader.png"))
+        assert window.grab().save(str(artifacts / "line-highlighting.png"))
         window.close()
         restored = VoiceLeafWindow(paths, Settings.load(paths.settings_file), show_setup=False)
         qtbot.addWidget(restored)
@@ -145,6 +161,6 @@ def test_real_pdf_window_full_reading_flow(qtbot, qapp, tmp_path, sample_pdf):
             assert restored.playback.intent == "stop"
         finally:
             restored.close()
-        print("Full PDF window flow passed: render, voice/rate selection, pause, seek, automatic page transition, restart/resume")
+        print("Full PDF window flow passed: render, synchronized line highlighting, voice/rate selection, pause, seek, automatic page transition, restart/resume")
     finally:
         window.close()

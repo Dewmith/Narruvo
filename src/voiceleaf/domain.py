@@ -14,12 +14,19 @@ class PdfInfo:
 
 
 @dataclass(frozen=True)
+class PdfLine:
+    text: str
+    rect: tuple[float, float, float, float]
+
+
+@dataclass(frozen=True)
 class TextBlock:
     x0: float
     y0: float
     x1: float
     y1: float
     text: str
+    lines: tuple[PdfLine, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -31,10 +38,34 @@ class PageText:
 
 
 @dataclass(frozen=True)
+class PageLine:
+    start: int
+    end: int
+    rect: tuple[float, float, float, float]
+
+
+@dataclass(frozen=True)
+class PreparedPage:
+    page_index: int
+    text: str
+    lines: tuple[PageLine, ...]
+
+
+@dataclass(frozen=True)
+class ReadingLine:
+    start: int
+    end: int
+    page_start: int
+    page_end: int
+    rect: tuple[float, float, float, float]
+
+
+@dataclass(frozen=True)
 class TextChunk:
     index: int
     page_index: int
     text: str
+    lines: tuple[ReadingLine, ...] = ()
 
     @property
     def text_hash(self) -> str:
@@ -76,8 +107,18 @@ class SynthesisRequest:
 
 
 @dataclass(frozen=True)
+class SpeechCue:
+    start_ms: int
+    end_ms: int
+    text_start: int
+    text_end: int
+
+
+@dataclass(frozen=True)
 class AudioResult:
     path: str
     duration_ms: int
     cache_hit: bool
+    cues: tuple[SpeechCue, ...] = ()
+    estimated_timings: bool = False
 

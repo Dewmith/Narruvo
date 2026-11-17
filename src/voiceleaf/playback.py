@@ -1,6 +1,7 @@
 """Narration state machine: bounded prefetch, intent preservation, stale-job rejection."""
 
 from pathlib import Path
+from bisect import bisect_right
 
 from PySide6.QtCore import QObject, Signal
 
@@ -89,6 +90,15 @@ class PlaybackController(QObject):
         if self.active_voice not in self.voices:
             self.active_voice = self.preferred_voice
             self.position_ms = 0
+
+    @property
+    def reading_cue(self):
+        if (self.current_audio is None or not self.current_audio.cues or
+                self.state not in ("PLAYING", "PAUSED") or self.completed):
+            return None
+        cues = self.current_audio.cues
+        index = max(0, bisect_right(cues, self.position_ms, key=lambda cue: cue.start_ms) - 1)
+        return cues[index]
 
     def snapshot(self, view_page: int) -> ReadingProgress:
         return ReadingProgress(

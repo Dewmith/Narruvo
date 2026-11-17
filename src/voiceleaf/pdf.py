@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
 
-from voiceleaf.domain import PageText, PdfInfo, TextBlock
+from voiceleaf.domain import PageText, PdfInfo, PdfLine, TextBlock
 
 
 class PdfError(ValueError):
@@ -77,7 +77,8 @@ class PdfService:
         # Inspect line boxes before accepting block order, and exclude image bytes.
         data = page.get_text("dict", flags=self.module.TEXTFLAGS_DICT & ~self.module.TEXT_PRESERVE_IMAGES)
         blocks = []
-        midpoint = page.rect.width / 2
+        unrotated = page.rect * page.derotation_matrix
+        midpoint = unrotated.width / 2
         for block in data["blocks"]:
             if block["type"] != 0:
                 continue
@@ -90,16 +91,17 @@ class PdfService:
             groups = [left, right] if left and right and len(left) + len(right) == len(lines) else [lines]
             for group in groups:
                 box = (min(line[0][0] for line in group), min(line[0][1] for line in group), max(line[0][2] for line in group), max(line[0][3] for line in group))
-                blocks.append(TextBlock(*box, "\n".join(line[1] for line in group)))
+                source_lines = tuple(PdfLine(text, tuple(self.module.Rect(bounds) * page.rotation_matrix)) for bounds, text in group)
+                blocks.append(TextBlock(*box, "\n".join(line[1] for line in group), source_lines))
         blocks = tuple(blocks)
-        result = PageText(index, float(page.rect.width), float(page.rect.height), blocks)
+        result = PageText(index, float(unrotated.width), float(unrotated.height), blocks)
         self.pages[index] = result
         return result
 
     def finalize(self):
-        from voiceleaf.text import chunk_pages, clean_pages
-        pages = clean_pages([self.pages[i] for i in sorted(self.pages)])
-        return pages, chunk_pages(pages)
+        from voiceleaf.text import chunk_prepared_pages, prepare_pages
+        prepared = prepare_pages([self.pages[i] for i in sorted(self.pages)])
+        return [(page.page_index, page.text) for page in prepared], chunk_prepared_pages(prepared)
 
     def render(self, index: int, scale: float) -> RenderedPage:
         page = self._page(index)
